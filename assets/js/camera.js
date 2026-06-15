@@ -1,0 +1,421 @@
+// assets/js/camera.js — WebRTC camera, Jepreto-style UI, raw photo capture
+'use strict';
+
+const Camera = (() => {
+  let stream       = null;
+  let frameData    = null; // {url, slots: [...]}
+  let capturedPhotos = []; // Array of { img: Image, filter: string } or null
+  let currentSlotIndex = 0;
+
+  // Settings
+  let captureDelay = 0;
+  let isMirrored   = true;
+  let currentFilter = 'none';
+
+  const video      = document.getElementById('video-stream');
+  const countdown  = document.getElementById('countdown-overlay');
+  const flashEl    = document.getElementById('camera-flash');
+  const errOverlay = document.querySelector('.camera-permission-error');
+  const captureBtn = document.getElementById('capture-btn');
+  const retakeBtn  = document.getElementById('retake-btn');
+  const nextBtn    = document.getElementById('camera-next-btn');
+  const stripContainer = document.getElementById('captured-strip');
+  const photoCounter = document.getElementById('photo-counter');
+
+  // Upload Elements
+  const dropzone = document.getElementById('camera-dropzone');
+  const uploadInput = document.getElementById('camera-upload-input');
+  const uploadBtn = document.getElementById('sidebar-upload-box');
+  const cameraCenter = document.querySelector('.camera-center');
+
+  // DOM Elements for settings
+  const delayBtns    = document.querySelectorAll('#delay-toggles .toggle-btn');
+  const mirrorToggle = document.getElementById('mirror-toggle');
+  const filterBtns   = document.querySelectorAll('.filter-item');
+
+  // We show the video element directly for live preview
+  if (video) video.style.display = 'block';
+
+  // ── Start camera stream ──────────────────────────────────
+  async function start() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      showError('Browser kamu tidak mendukung WebRTC. Coba Chrome atau Safari terbaru.');
+      return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+        audio: false,
+      });
+      video.srcObject = stream;
+      await video.play();
+      applySettings();
+    } catch (err) {
+      const msgs = {
+        NotAllowedError:  '🚫 Akses kamera ditolak. Izinkan kamera di pengaturan browser kamu ya.',
+        NotFoundError:    '📷 Kamera tidak ditemukan. Pastikan kamera terhubung.',
+        NotReadableError: '⚠️ Kamera sedang dipakai aplikasi lain.',
+      };
+      showError(msgs[err.name] ?? `Error: ${err.message}`);
+    }
+  }
+
+  function stop() {
+    stream?.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
+  // ── Load frame overlay & setup slots ─────────────────────
+  function loadFrame(frame) {
+    frameData = frame;
+    const oldPhotos = capturedPhotos || [];
+    capturedPhotos = new Array(frame.slots.length).fill(null);
+    
+    // Preserve existing photos up to the new slot count
+    for(let i = 0; i < frame.slots.length; i++) {
+        if (oldPhotos[i]) {
+            capturedPhotos[i] = oldPhotos[i];
+        }
+    }
+    
+    // Find next empty slot
+    currentSlotIndex = capturedPhotos.findIndex(p => p === null);
+    if (currentSlotIndex === -1) currentSlotIndex = frame.slots.length;
+    
+    renderStrip();
+    checkCompletion();
+  }
+
+  // ── Settings Handlers ────────────────────────────────────
+  delayBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      delayBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      captureDelay = parseInt(btn.dataset.val, 10);
+    });
+  });
+
+  mirrorToggle?.addEventListener('change', (e) => {
+    isMirrored = e.target.checked;
+    applySettings();
+  });
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applySettings();
+    });
+  });
+
+  function applySettings() {
+    if (!video) return;
+    video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    video.style.filter = currentFilter !== 'none' ? currentFilter : '';
+  }
+
+  // ── Countdown then capture ───────────────────────────────
+  async function triggerCapture() {
+    if (!stream || currentSlotIndex >= frameData.slots.length) return;
+    captureBtn.disabled = true;
+
+    // Countdown
+    if (captureDelay > 0) {
+      countdown.classList.add('active');
+      for (let i = captureDelay; i > 0; i--) {
+        countdown.textContent = i;
+        await sleep(1000);
+      }
+      countdown.classList.remove('active');
+    }
+
+    // Flash
+    flashEl?.classList.add('active');
+    
+    // Capture the slot (cropped to aspect ratio)
+    captureSlot(currentSlotIndex);
+
+    await sleep(100);
+    flashEl?.classList.remove('active');
+
+    // Advance slot
+    currentSlotIndex++;
+    if (currentSlotIndex >= frameData.slots.length) {
+      currentSlotIndex = frameData.slots.length; 
+    }
+    
+    renderStrip();
+    checkCompletion();
+    captureBtn.disabled = false;
+  }
+
+  // ── Manual Upload & Drag Drop ────────────────────────────
+  function handleImageUpload(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      if(App && App.showToast) App.showToast('Hanya menerima file gambar', 'error');
+      return;
+    }
+    
+    if (currentSlotIndex >= frameData.slots.length) {
+      if(App && App.showToast) App.showToast('Semua slot sudah penuh', 'info');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        captureUploadedSlot(img, currentSlotIndex);
+        currentSlotIndex++;
+        if (currentSlotIndex >= frameData.slots.length) {
+          currentSlotIndex = frameData.slots.length;
+        }
+        renderStrip();
+        checkCompletion();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function setupUploadListeners() {
+    if (uploadBtn) {
+      uploadBtn.onclick = () => uploadInput.click();
+      uploadBtn.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadBtn.style.background = 'rgba(75, 63, 160, 0.15)';
+      });
+      uploadBtn.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadBtn.style.background = 'rgba(75, 63, 160, 0.05)';
+      });
+      uploadBtn.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadBtn.style.background = 'rgba(75, 63, 160, 0.05)';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleImageUpload(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    if (uploadInput) uploadInput.onchange = (e) => {
+      if (e.target.files.length > 0) handleImageUpload(e.target.files[0]);
+    };
+
+    if (cameraCenter) {
+      cameraCenter.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone?.classList.add('active');
+      });
+      cameraCenter.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        // Prevent flickering when dragging over children
+        if (e.relatedTarget && !cameraCenter.contains(e.relatedTarget)) {
+          dropzone?.classList.remove('active');
+        }
+      });
+      cameraCenter.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone?.classList.remove('active');
+        if (e.dataTransfer.files.length > 0) {
+          handleImageUpload(e.dataTransfer.files[0]);
+        }
+      });
+    }
+  }
+
+  // Process uploaded image to fit slot ratio
+  function captureUploadedSlot(sourceImg, index) {
+    const slot = frameData.slots[index];
+    const frameW = frameData.width || 1080;
+    const frameH = frameData.height || 1920;
+    
+    const trueSlotW = (slot.width / 100) * frameW;
+    const trueSlotH = (slot.height / 100) * frameH;
+    
+    const slotRatio = trueSlotW / trueSlotH;
+    const imgRatio = sourceImg.width / sourceImg.height;
+    
+    let cropW = sourceImg.width;
+    let cropH = sourceImg.height;
+    let cropX = 0;
+    let cropY = 0;
+
+    if (imgRatio > slotRatio) {
+      cropW = sourceImg.height * slotRatio;
+      cropX = (sourceImg.width - cropW) / 2;
+    } else {
+      cropH = sourceImg.width / slotRatio;
+      cropY = (sourceImg.height - cropH) / 2;
+    }
+
+    const offscreen = document.createElement('canvas');
+    offscreen.width = cropW;
+    offscreen.height = cropH;
+    const offCtx = offscreen.getContext('2d');
+    
+    // No mirror for uploaded images by default
+    offCtx.drawImage(sourceImg, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    
+    const dataUrl = offscreen.toDataURL('image/jpeg', 0.95);
+    const img = new Image();
+    img.src = dataUrl;
+    
+    capturedPhotos[index] = { img: img, filter: currentFilter };
+  }
+
+  // ── Capture specific slot (No stretch logic) ─────────────
+  function captureSlot(index) {
+    const slot = frameData.slots[index];
+    
+    // Calculate exact pixel dimensions of the slot based on the frame's pixel dimensions
+    const frameW = frameData.width || 1080;
+    const frameH = frameData.height || 1920;
+    
+    const trueSlotW = (slot.width / 100) * frameW;
+    const trueSlotH = (slot.height / 100) * frameH;
+    
+    // Determine the true slot aspect ratio
+    const slotRatio = trueSlotW / trueSlotH;
+    const videoRatio = video.videoWidth / video.videoHeight;
+    
+    let cropW = video.videoWidth;
+    let cropH = video.videoHeight;
+    let cropX = 0;
+    let cropY = 0;
+
+    // We want to crop the video to match the slotRatio from the center
+    if (videoRatio > slotRatio) {
+      // video is wider than slot, crop sides
+      cropW = video.videoHeight * slotRatio;
+      cropX = (video.videoWidth - cropW) / 2;
+    } else {
+      // video is taller than slot, crop top/bottom
+      cropH = video.videoWidth / slotRatio;
+      cropY = (video.videoHeight - cropH) / 2;
+    }
+
+    const offscreen = document.createElement('canvas');
+    offscreen.width = cropW;
+    offscreen.height = cropH;
+    const offCtx = offscreen.getContext('2d');
+    
+    if (isMirrored) {
+      offCtx.translate(cropW, 0);
+      offCtx.scale(-1, 1);
+    }
+    
+    // Draw only the cropped portion
+    offCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    
+    const dataUrl = offscreen.toDataURL('image/jpeg', 0.95);
+    const img = new Image();
+    img.src = dataUrl;
+    
+    // Save raw image and current live filter string
+    capturedPhotos[index] = { img: img, filter: currentFilter };
+  }
+
+  // ── Pass data to App state ───────────────────────────────
+  function getPhotosData() {
+    return {
+      photos: capturedPhotos, // array of {img, filter}
+      frame: frameData
+    };
+  }
+
+  // ── Sidebar Strip UI ─────────────────────────────────────
+  function renderStrip() {
+    if (!stripContainer || !frameData) return;
+    stripContainer.innerHTML = '';
+    
+    let takenCount = 0;
+    
+    frameData.slots.forEach((slot, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = `captured-thumb ${i === currentSlotIndex ? 'active' : ''}`;
+      thumb.dataset.index = i;
+      
+      if (capturedPhotos[i]) {
+        takenCount++;
+        const imgEl = document.createElement('img');
+        imgEl.src = capturedPhotos[i].img.src;
+        // Apply filter to thumbnail preview
+        imgEl.style.filter = capturedPhotos[i].filter !== 'none' ? capturedPhotos[i].filter : '';
+        
+        // Open lightbox on click
+        imgEl.style.cursor = 'pointer';
+        imgEl.onclick = () => {
+          if (App && App.openLightbox) App.openLightbox(capturedPhotos[i].img.src);
+        };
+        thumb.appendChild(imgEl);
+        
+        // Add delete button
+        const delBtn = document.createElement('div');
+        delBtn.innerHTML = '×';
+        delBtn.style.cssText = 'position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:white;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;line-height:1;z-index:2;';
+        delBtn.title = 'Hapus foto ini';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          deletePhoto(i);
+        };
+        thumb.appendChild(delBtn);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:12px;font-weight:600;';
+        placeholder.textContent = `${i + 1}`;
+        thumb.appendChild(placeholder);
+      }
+      
+      stripContainer.appendChild(thumb);
+    });
+    
+    if (photoCounter) photoCounter.textContent = `${takenCount}/${frameData.slots.length}`;
+  }
+
+  function deletePhoto(index) {
+    capturedPhotos[index] = null;
+    // Auto find earliest empty slot
+    currentSlotIndex = capturedPhotos.findIndex(p => p === null);
+    if (currentSlotIndex === -1) currentSlotIndex = frameData.slots.length;
+    renderStrip();
+    checkCompletion();
+  }
+
+  function checkCompletion() {
+    const isComplete = capturedPhotos.every(p => p !== null);
+    if (nextBtn) {
+      nextBtn.disabled = !isComplete;
+      // also ensure it is visible, just in case
+      nextBtn.style.display = 'block';
+    }
+    if (captureBtn) {
+      captureBtn.style.display = isComplete ? 'none' : 'flex';
+    }
+  }
+
+  // ── Error overlay ────────────────────────────────────────
+  function showError(msg) {
+    if (errOverlay) {
+      errOverlay.querySelector('p').textContent = msg;
+      errOverlay.classList.add('active');
+    }
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // ── Event Listeners ──────────────────────────────────────
+  captureBtn?.addEventListener('click', () => triggerCapture());
+  retakeBtn?.addEventListener('click', () => {
+    // Retake all
+    capturedPhotos.fill(null);
+    currentSlotIndex = 0;
+    renderStrip();
+    checkCompletion();
+  });
+  
+  setupUploadListeners();
+  
+  return { start, stop, loadFrame, getPhotosData };
+})();
