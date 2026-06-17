@@ -255,7 +255,7 @@ const App = (() => {
     if (!grid) return;
 
     try {
-      const resp   = await fetch('/api/frames.php');
+      const resp   = await fetch('/api/frames.php?v=' + Date.now());
       const data   = await resp.json();
       allFrames    = data.frames ?? [];
 
