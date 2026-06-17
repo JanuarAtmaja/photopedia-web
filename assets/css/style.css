@@ -466,7 +466,6 @@ button { cursor: pointer; font-family: var(--font); }
 .frame-card.selected .frame-check { display: flex; }
 
 .frame-thumb {
-  aspect-ratio: 3/4;
   overflow: hidden;
   background: var(--bg);
   display: flex;
@@ -476,11 +475,11 @@ button { cursor: pointer; font-family: var(--font); }
 }
 .frame-thumb img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
   transition: transform 0.3s ease;
 }
-.frame-card:hover .frame-thumb img { transform: scale(1.04); }
+.frame-card:hover .frame-thumb img { transform: scale(1.02); }
 
 .frame-check {
   display: none;

@@ -87,7 +87,7 @@ $jsConfig = json_encode([
   <link rel="manifest" href="/site.webmanifest">
 
   <!-- App Styles -->
-  <link rel="stylesheet" href="/assets/css/style.css?v=15">
+  <link rel="stylesheet" href="/assets/css/style.css?v=18">
 
   <!-- Config untuk JS (hanya anon key, AMAN untuk expose ke client) -->
   <script>
