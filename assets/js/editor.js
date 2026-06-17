@@ -62,6 +62,11 @@ const Editor = (() => {
     stickers = [];
     globalFilter = 'none';
     
+    document.querySelectorAll('input[type="range"]').forEach(el => {
+      el.addEventListener('input', (e) => updateSliderBackground(e.target));
+      updateSliderBackground(el);
+    });
+    
     // Initialize offsets and transform data for photos
     if (cameraData && cameraData.photos) {
       cameraData.photos.forEach(p => {
@@ -298,6 +303,15 @@ const Editor = (() => {
     render();
   }
 
+  function updateSliderBackground(el) {
+    if (!el) return;
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const val = parseFloat(el.value);
+    const percentage = ((val - min) / (max - min)) * 100;
+    el.style.setProperty('--val', percentage + '%');
+  }
+
   function setupPhotoSliders() {
     if (!sliderScale) return;
     
@@ -349,6 +363,8 @@ const Editor = (() => {
     sliderContrast.value = p.contrast || 100;
     sliderSaturate.value = p.saturate || 100;
     sliderHue.value = p.hue || 0;
+    
+    [sliderScale, sliderRotate, sliderBrightness, sliderContrast, sliderSaturate, sliderHue].forEach(updateSliderBackground);
   }
 
   // ── Drag & Drop ──────────────────────────────────────────
