@@ -87,7 +87,7 @@ $jsConfig = json_encode([
   <link rel="manifest" href="/site.webmanifest">
 
   <!-- App Styles -->
-  <link rel="stylesheet" href="/assets/css/style.css?v=13">
+  <link rel="stylesheet" href="/assets/css/style.css?v=15">
 
   <!-- Config untuk JS (hanya anon key, AMAN untuk expose ke client) -->
   <script>
@@ -646,9 +646,9 @@ $jsConfig = json_encode([
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App modules -->
-<script src="/assets/js/camera.js?v=14"></script>
-<script src="/assets/js/editor.js?v=14"></script>
-<script src="/assets/js/app.js?v=14"></script>
+<script src="/assets/js/camera.js?v=15"></script>
+<script src="/assets/js/editor.js?v=15"></script>
+<script src="/assets/js/app.js?v=15"></script>
 
 </body>
 </html>
