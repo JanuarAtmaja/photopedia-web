@@ -205,6 +205,51 @@ const App = (() => {
   }
 
   // ── Frame picker init ──────────────────────────────────────
+  let allFrames = [];
+
+  function renderFrames() {
+    const grid = document.querySelector('.frames-grid');
+    if (!grid) return;
+    
+    const searchVal = document.getElementById('frame-search')?.value.toLowerCase() || '';
+    const sortVal   = document.getElementById('frame-sort')?.value || 'alpha';
+    
+    let filtered = allFrames.filter(f => f.label.toLowerCase().includes(searchVal));
+    
+    if (sortVal === 'newest') {
+      filtered.sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+    } else {
+      // Default alpha
+      filtered.sort((a, b) => a.label.localeCompare(b.label));
+    }
+    
+    if (filtered.length === 0) {
+      grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px">Tidak ada bingkai yang cocok.</p>';
+      return;
+    }
+    
+    grid.innerHTML = '';
+    filtered.forEach(frame => {
+      const card = document.createElement('div');
+      card.className = 'frame-card';
+      if (state.selectedFrame && state.selectedFrame.id === frame.id) {
+         card.classList.add('selected');
+      }
+      card.dataset.frameId = frame.id;
+      card.innerHTML = `
+        <div class="frame-thumb">
+          <img src="${frame.url}" alt="${frame.label}" loading="lazy">
+          <div class="frame-check">✓</div>
+        </div>
+        <div class="frame-info">
+          <div class="frame-name">${frame.label}</div>
+          <div class="frame-slots">${frame.slots.length} Foto</div>
+        </div>`;
+      card.addEventListener('click', () => selectFrame(frame));
+      grid.appendChild(card);
+    });
+  }
+
   async function initFramePicker() {
     const grid = document.querySelector('.frames-grid');
     if (!grid) return;
@@ -212,30 +257,18 @@ const App = (() => {
     try {
       const resp   = await fetch('/api/frames.php');
       const data   = await resp.json();
-      const frames = data.frames ?? [];
+      allFrames    = data.frames ?? [];
 
-      if (frames.length === 0) {
+      if (allFrames.length === 0) {
         grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px">Belum ada frame tersedia.</p>';
         return;
       }
 
-      grid.innerHTML = '';
-      frames.forEach(frame => {
-        const card = document.createElement('div');
-        card.className    = 'frame-card';
-        card.dataset.frameId = frame.id;
-        card.innerHTML = `
-          <div class="frame-thumb">
-            <img src="${frame.url}" alt="${frame.label}" loading="lazy">
-            <div class="frame-check">✓</div>
-          </div>
-          <div class="frame-info">
-            <div class="frame-name">${frame.label}</div>
-            <div class="frame-slots">${frame.slots.length} Foto</div>
-          </div>`;
-        card.addEventListener('click', () => selectFrame(frame));
-        grid.appendChild(card);
-      });
+      renderFrames();
+
+      document.getElementById('frame-search')?.addEventListener('input', renderFrames);
+      document.getElementById('frame-sort')?.addEventListener('change', renderFrames);
+
     } catch (err) {
       grid.innerHTML = '<p style="color:var(--error);grid-column:1/-1;text-align:center;padding:40px">Gagal memuat frame. Coba refresh.</p>';
       console.error('Frame load error:', err);

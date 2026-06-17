@@ -257,6 +257,19 @@ $jsConfig = json_encode([
         <p class="section-sub">Klik bingkai favoritmu untuk melanjutkan</p>
       </div>
 
+      <!-- Controls: Search & Sort -->
+      <div class="frames-controls" style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px; position:relative;">
+          <input type="text" id="frame-search" placeholder="Cari bingkai..." class="form-control" style="width:100%; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text-main);">
+        </div>
+        <div style="min-width:140px;">
+          <select id="frame-sort" class="form-control" style="width:100%; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text-main);">
+            <option value="alpha">Abjad (A-Z)</option>
+            <option value="newest">Terbaru</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Frame cards akan diload oleh JS dari /api/frames.php -->
       <div class="frames-grid" role="list" aria-label="Daftar bingkai tersedia">
         <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">
@@ -646,9 +659,9 @@ $jsConfig = json_encode([
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App modules -->
-<script src="/assets/js/camera.js?v=17"></script>
-<script src="/assets/js/editor.js?v=17"></script>
-<script src="/assets/js/app.js?v=17"></script>
+<script src="/assets/js/camera.js?v=21"></script>
+<script src="/assets/js/editor.js?v=21"></script>
+<script src="/assets/js/app.js?v=21"></script>
 
 </body>
 </html>

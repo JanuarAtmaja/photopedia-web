@@ -112,6 +112,7 @@ function get_frames(): array
             'width'     => $frameWidth,
             'height'    => $frameHeight,
             'slots'     => $slots,
+            'mtime'     => filemtime($file),
         ];
     }
 
