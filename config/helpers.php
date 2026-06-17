@@ -57,10 +57,19 @@ function get_frames(): array
         // Define slots metadata based on frame slug.
         // Slots are defined in percentages: x, y, width, height
         $slotsData = [
-            'film-strip' => [
-                ['x' => 10, 'y' => 8, 'width' => 80, 'height' => 22],
-                ['x' => 10, 'y' => 32, 'width' => 80, 'height' => 22],
-                ['x' => 10, 'y' => 56, 'width' => 80, 'height' => 22],
+            'arctic-monkeys-am' => [
+                ['x' => 10.61, 'y' => 10.81, 'width' => 78.64, 'height' => 22.21],
+                ['x' => 10.75, 'y' => 34.97, 'width' => 78.64, 'height' => 22.21],
+                ['x' => 10.61, 'y' => 59.08, 'width' => 78.64, 'height' => 22.21],
+            ],
+            'arctic-monkeys-wfn' => [
+                ['x' => 8.06, 'y' => 3.4, 'width' => 83.73, 'height' => 34.97],
+                ['x' => 8.2, 'y' => 34.32, 'width' => 83.73, 'height' => 34.97],
+            ],
+            'the-jeblogs-sambutlah' => [
+                ['x' => 3.96, 'y' => 4.15, 'width' => 92.5, 'height' => 22.16],
+                ['x' => 3.96, 'y' => 27.86, 'width' => 92.5, 'height' => 22.16],
+                ['x' => 3.96, 'y' => 51.58, 'width' => 92.5, 'height' => 22.16],
             ],
             'music-player' => [
                 ['x' => 10, 'y' => 4, 'width' => 80, 'height' => 22],
