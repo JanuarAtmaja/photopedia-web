@@ -571,13 +571,27 @@ const Editor = (() => {
 
   // ── Export ───────────────────────────────────────────────
   function exportDataUrl() {
-    // Ensure final render
+    // Ensure final render without selection outline
+    const temp = selectedPhotoIndex;
+    selectedPhotoIndex = null;
     render();
-    return canvas.toDataURL('image/jpeg', 0.95);
+    const data = canvas.toDataURL('image/jpeg', 0.95);
+    selectedPhotoIndex = temp;
+    render();
+    return data;
   }
 
   function exportBlob() {
-    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+    return new Promise(resolve => {
+      const temp = selectedPhotoIndex;
+      selectedPhotoIndex = null;
+      render();
+      canvas.toBlob(blob => {
+        selectedPhotoIndex = temp;
+        render();
+        resolve(blob);
+      }, 'image/jpeg', 0.95);
+    });
   }
 
   // Basic editor tab switching (already in app.js, but we can hook if needed)
