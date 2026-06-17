@@ -352,6 +352,22 @@ const Editor = (() => {
   }
 
   // ── Drag & Drop ──────────────────────────────────────────
+  let initialPinchDistance = null;
+  let initialPinchScale = 1;
+  let initialPinchAngle = null;
+  let initialPinchRotation = 0;
+
+  function getPinchInfo(e) {
+    if (e.touches && e.touches.length >= 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      return { distance, angle };
+    }
+    return null;
+  }
+
   function setupCanvasEvents() {
     canvas.addEventListener('mousedown', onPointerDown);
     canvas.addEventListener('touchstart', onPointerDown, {passive:false});
@@ -359,6 +375,19 @@ const Editor = (() => {
     window.addEventListener('touchmove', onPointerMove, {passive:false});
     window.addEventListener('mouseup', onPointerUp);
     window.addEventListener('touchend', onPointerUp);
+    canvas.addEventListener('wheel', onWheel, {passive:false});
+  }
+
+  function onWheel(e) {
+    if (selectedPhotoIndex !== null && cameraData && cameraData.photos[selectedPhotoIndex]) {
+      e.preventDefault();
+      const p = cameraData.photos[selectedPhotoIndex];
+      const zoomSpeed = 0.05;
+      p.scale = (p.scale || 1) + (e.deltaY < 0 ? zoomSpeed : -zoomSpeed);
+      if (p.scale < 0.1) p.scale = 0.1;
+      updatePhotoSlidersUI();
+      render();
+    }
   }
 
   function getPointerPos(e) {
@@ -372,6 +401,17 @@ const Editor = (() => {
   }
 
   function onPointerDown(e) {
+    if (e.touches && e.touches.length >= 2) {
+      const pinch = getPinchInfo(e);
+      if (pinch && selectedPhotoIndex !== null && cameraData.photos[selectedPhotoIndex]) {
+        initialPinchDistance = pinch.distance;
+        initialPinchAngle = pinch.angle;
+        initialPinchScale = cameraData.photos[selectedPhotoIndex].scale || 1;
+        initialPinchRotation = cameraData.photos[selectedPhotoIndex].rotation || 0;
+      }
+      return;
+    }
+
     const pos = getPointerPos(e);
     // Find sticker (reverse order to pick top)
     for (let i = stickers.length - 1; i >= 0; i--) {
@@ -422,6 +462,26 @@ const Editor = (() => {
   }
 
   function onPointerMove(e) {
+    if (e.touches && e.touches.length >= 2) {
+      e.preventDefault();
+      const pinch = getPinchInfo(e);
+      if (pinch && initialPinchDistance && selectedPhotoIndex !== null) {
+        const p = cameraData.photos[selectedPhotoIndex];
+        
+        // Scale
+        const scaleDiff = pinch.distance / initialPinchDistance;
+        p.scale = Math.max(0.1, initialPinchScale * scaleDiff);
+        
+        // Rotation
+        const angleDiff = pinch.angle - initialPinchAngle;
+        p.rotation = initialPinchRotation + angleDiff;
+        
+        updatePhotoSlidersUI();
+        render();
+      }
+      return;
+    }
+
     if (!isDragging && !isDraggingPhoto) return;
     e.preventDefault();
     const pos = getPointerPos(e);
@@ -466,6 +526,7 @@ const Editor = (() => {
   function onPointerUp() {
     isDragging = false;
     dragSticker = null;
+    initialPinchDistance = null;
     
     if (isDraggingPhoto) {
       if (dropTargetIndex !== null && dropTargetIndex !== dragPhotoIndex) {
