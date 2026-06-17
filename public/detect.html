@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Detect Slots</title>
+</head>
+<body>
+  <h1>Mendeteksi Lubang Foto...</h1>
+  <pre id="output">Loading...</pre>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="img" src="/assets/frames/frame-Reality-Club-Presents....png" style="display:none;">
+  <script>
+    const img = document.getElementById('img');
+    img.onload = () => {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+      
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      let boxes = [];
+      
+      for (let y = 0; y < canvas.height; y+=5) {
+        for (let x = 0; x < canvas.width; x+=5) {
+          const alpha = imgData[(y * canvas.width + x) * 4 + 3];
+          if (alpha < 100) { // transparent
+            let matched = false;
+            for (let b of boxes) {
+              if (x >= b.minX - 50 && x <= b.maxX + 50 && y >= b.minY - 50 && y <= b.maxY + 50) {
+                b.minX = Math.min(b.minX, x);
+                b.maxX = Math.max(b.maxX, x);
+                b.minY = Math.min(b.minY, y);
+                b.maxY = Math.max(b.maxY, y);
+                matched = true;
+                break;
+              }
+            }
+            if (!matched) {
+              boxes.push({minX: x, maxX: x, minY: y, maxY: y});
+            }
+          }
+        }
+      }
+      
+      let merged = true;
+      while (merged) {
+        merged = false;
+        for (let i = 0; i < boxes.length; i++) {
+          for (let j = i+1; j < boxes.length; j++) {
+            let b1 = boxes[i], b2 = boxes[j];
+            if (!(b1.maxX < b2.minX - 50 || b1.minX > b2.maxX + 50 || b1.maxY < b2.minY - 50 || b1.minY > b2.maxY + 50)) {
+              boxes[i].minX = Math.min(b1.minX, b2.minX);
+              boxes[i].maxX = Math.max(b1.maxX, b2.maxX);
+              boxes[i].minY = Math.min(b1.minY, b2.minY);
+              boxes[i].maxY = Math.max(b1.maxY, b2.maxY);
+              boxes.splice(j, 1);
+              merged = true;
+              break;
+            }
+          }
+          if (merged) break;
+        }
+      }
+      
+      boxes.sort((a,b) => a.minY - b.minY);
+      
+      let out = "";
+      boxes.forEach((b, i) => {
+        if (b.maxX - b.minX < 50) return;
+        const x = (b.minX / canvas.width * 100).toFixed(2);
+        const y = (b.minY / canvas.height * 100).toFixed(2);
+        const w = ((b.maxX - b.minX) / canvas.width * 100).toFixed(2);
+        const h = ((b.maxY - b.minY) / canvas.height * 100).toFixed(2);
+        out += `['x' => ${x}, 'y' => ${y}, 'width' => ${w}, 'height' => ${h}],\n`;
+      });
+      
+      document.getElementById('output').innerText = "Mohon copy hasil ini dan berikan ke saya:\n\n" + out;
+    };
+    img.onerror = () => {
+      document.getElementById('output').innerText = "Gagal memuat gambar.";
+    }
+  </script>
+</body>
+</html>

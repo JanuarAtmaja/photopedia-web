@@ -72,8 +72,8 @@ function get_frames(): array
                 ['x' => 3.96, 'y' => 51.58, 'width' => 92.5, 'height' => 22.16],
             ],
             'reality-club-presents...' => [
-                ['x' => 12.0, 'y' => 11.0, 'width' => 76.0, 'height' => 38.0],
-                ['x' => 12.0, 'y' => 51.0, 'width' => 76.0, 'height' => 38.0],
+                ['x' => 2.83, 'y' => 7.25, 'width' => 94.06, 'height' => 29.01],
+                ['x' => 2.83, 'y' => 51.28, 'width' => 94.06, 'height' => 29.01],
             ],
             'music-player' => [
                 ['x' => 10, 'y' => 4, 'width' => 80, 'height' => 22],
