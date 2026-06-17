@@ -97,7 +97,7 @@ function get_frames(): array
             ]
         ];
 
-        $slots = $slotsData[$slug] ?? [['x' => 0, 'y' => 0, 'width' => 100, 'height' => 100]]; // fallback to 1 slot full size
+        $slots = $slotsData[strtolower($slug)] ?? [['x' => 0, 'y' => 0, 'width' => 100, 'height' => 100]]; // fallback to 1 slot full size
 
         $size = getimagesize($file);
         $frameWidth = $size[0] ?? 1080;
