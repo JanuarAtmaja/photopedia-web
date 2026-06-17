@@ -225,38 +225,24 @@ const Camera = (() => {
     }
   }
 
-  // Process uploaded image to fit slot ratio
+  // Process uploaded image (preserve full image, no crop, just resize if too large)
   function captureUploadedSlot(sourceImg, index) {
-    const slot = frameData.slots[index];
-    const frameW = frameData.width || 1080;
-    const frameH = frameData.height || 1920;
+    const MAX_DIM = 2000;
+    let w = sourceImg.width;
+    let h = sourceImg.height;
     
-    const trueSlotW = (slot.width / 100) * frameW;
-    const trueSlotH = (slot.height / 100) * frameH;
-    
-    const slotRatio = trueSlotW / trueSlotH;
-    const imgRatio = sourceImg.width / sourceImg.height;
-    
-    let cropW = sourceImg.width;
-    let cropH = sourceImg.height;
-    let cropX = 0;
-    let cropY = 0;
-
-    if (imgRatio > slotRatio) {
-      cropW = sourceImg.height * slotRatio;
-      cropX = (sourceImg.width - cropW) / 2;
-    } else {
-      cropH = sourceImg.width / slotRatio;
-      cropY = (sourceImg.height - cropH) / 2;
+    if (w > MAX_DIM || h > MAX_DIM) {
+      const scale = Math.min(MAX_DIM / w, MAX_DIM / h);
+      w *= scale;
+      h *= scale;
     }
 
     const offscreen = document.createElement('canvas');
-    offscreen.width = cropW;
-    offscreen.height = cropH;
+    offscreen.width = w;
+    offscreen.height = h;
     const offCtx = offscreen.getContext('2d');
     
-    // No mirror for uploaded images by default
-    offCtx.drawImage(sourceImg, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    offCtx.drawImage(sourceImg, 0, 0, w, h);
     
     const dataUrl = offscreen.toDataURL('image/jpeg', 0.95);
     const img = new Image();
@@ -265,36 +251,10 @@ const Camera = (() => {
     capturedPhotos[index] = { img: img, filter: currentFilter };
   }
 
-  // ── Capture specific slot (No stretch logic) ─────────────
+  // ── Capture specific slot (No stretch logic, preserve full frame) ─────────────
   function captureSlot(index) {
-    const slot = frameData.slots[index];
-    
-    // Calculate exact pixel dimensions of the slot based on the frame's pixel dimensions
-    const frameW = frameData.width || 1080;
-    const frameH = frameData.height || 1920;
-    
-    const trueSlotW = (slot.width / 100) * frameW;
-    const trueSlotH = (slot.height / 100) * frameH;
-    
-    // Determine the true slot aspect ratio
-    const slotRatio = trueSlotW / trueSlotH;
-    const videoRatio = video.videoWidth / video.videoHeight;
-    
-    let cropW = video.videoWidth;
-    let cropH = video.videoHeight;
-    let cropX = 0;
-    let cropY = 0;
-
-    // We want to crop the video to match the slotRatio from the center
-    if (videoRatio > slotRatio) {
-      // video is wider than slot, crop sides
-      cropW = video.videoHeight * slotRatio;
-      cropX = (video.videoWidth - cropW) / 2;
-    } else {
-      // video is taller than slot, crop top/bottom
-      cropH = video.videoWidth / slotRatio;
-      cropY = (video.videoHeight - cropH) / 2;
-    }
+    const cropW = video.videoWidth;
+    const cropH = video.videoHeight;
 
     const offscreen = document.createElement('canvas');
     offscreen.width = cropW;
@@ -306,8 +266,7 @@ const Camera = (() => {
       offCtx.scale(-1, 1);
     }
     
-    // Draw only the cropped portion
-    offCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    offCtx.drawImage(video, 0, 0, cropW, cropH);
     
     const dataUrl = offscreen.toDataURL('image/jpeg', 0.95);
     const img = new Image();
