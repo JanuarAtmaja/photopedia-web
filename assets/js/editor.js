@@ -16,12 +16,13 @@ const Editor = (() => {
   let dragOffsetX = 0;
   let dragOffsetY = 0;
 
-  // Photo drag state
+  // Photo drag & edit state
   let isDraggingPhoto = false;
   let dragPhotoIndex = null;
   let dragLastX = 0;
   let dragLastY = 0;
   let dropTargetIndex = null;
+  let selectedPhotoIndex = 0; // Default to first photo
 
   // DOM Elements
   const templateThumb = document.getElementById('selected-template-thumb');
@@ -29,6 +30,17 @@ const Editor = (() => {
   const templateSlots = document.getElementById('selected-template-slots');
   const filtersContainer = document.getElementById('post-filters-container');
   const emojiGrid     = document.querySelector('#tab-emoji .emoji-grid');
+  
+  // Transform & Adjust Sliders
+  const sliderScale = document.getElementById('photo-scale');
+  const sliderRotate = document.getElementById('photo-rotate');
+  const sliderBrightness = document.getElementById('photo-brightness');
+  const sliderContrast = document.getElementById('photo-contrast');
+  const sliderSaturate = document.getElementById('photo-saturate');
+  const sliderHue = document.getElementById('photo-hue');
+  const valScale = document.getElementById('zoom-val');
+  const valRotate = document.getElementById('rotate-val');
+  const btnResetPhoto = document.getElementById('reset-photo-btn');
   
   // Available filters (matches camera)
   const FILTERS = [
@@ -50,12 +62,18 @@ const Editor = (() => {
     stickers = [];
     globalFilter = 'none';
     
-    // Initialize offsets for photos
+    // Initialize offsets and transform data for photos
     if (cameraData && cameraData.photos) {
       cameraData.photos.forEach(p => {
         if (p && p.offsetX === undefined) {
           p.offsetX = 0;
           p.offsetY = 0;
+          p.scale = 1;
+          p.rotation = 0;
+          p.brightness = 100;
+          p.contrast = 100;
+          p.saturate = 100;
+          p.hue = 0;
         }
       });
     }
@@ -70,6 +88,8 @@ const Editor = (() => {
     populateColors();
     setupCanvasEvents();
     setupTextTool();
+    setupPhotoSliders();
+    updatePhotoSlidersUI();
 
     // Load frame image
     frameImage = new Image();
@@ -104,14 +124,43 @@ const Editor = (() => {
         ctx.rect(sx, sy, sw, sh);
         ctx.clip();
 
-        // Apply filter: If global is 'none', use photo's live filter, else use global
+        // 1. Build composite filter (Base filter + Custom adjustments)
+        let customFilters = [];
+        if (photoData.brightness !== 100) customFilters.push(`brightness(${photoData.brightness}%)`);
+        if (photoData.contrast !== 100) customFilters.push(`contrast(${photoData.contrast}%)`);
+        if (photoData.saturate !== 100) customFilters.push(`saturate(${photoData.saturate}%)`);
+        if (photoData.hue !== 0) customFilters.push(`hue-rotate(${photoData.hue}deg)`);
+        let customFilterStr = customFilters.join(' ');
+        
         const activeFilter = globalFilter !== 'none' ? globalFilter : photoData.filter;
-        ctx.filter = activeFilter !== 'none' ? activeFilter : 'none';
+        let finalFilter = activeFilter !== 'none' ? activeFilter : '';
+        if (customFilterStr) {
+          finalFilter = (finalFilter + ' ' + customFilterStr).trim();
+        }
+        ctx.filter = finalFilter || 'none';
 
-        const offsetX = photoData.offsetX || 0;
-        const offsetY = photoData.offsetY || 0;
+        // 2. Object-fit cover logic
+        const imgRatio = photoData.img.width / photoData.img.height;
+        const slotRatio = sw / sh;
+        let drawW, drawH;
 
-        ctx.drawImage(photoData.img, sx + offsetX, sy + offsetY, sw, sh);
+        if (imgRatio > slotRatio) {
+          drawH = sh;
+          drawW = sh * imgRatio;
+        } else {
+          drawW = sw;
+          drawH = sw / imgRatio;
+        }
+
+        const cx = sx + sw / 2;
+        const cy = sy + sh / 2;
+
+        ctx.translate(cx + (photoData.offsetX || 0), cy + (photoData.offsetY || 0));
+        ctx.rotate((photoData.rotation || 0) * Math.PI / 180);
+        const scale = photoData.scale || 1;
+        ctx.scale(scale, scale);
+
+        ctx.drawImage(photoData.img, -drawW / 2, -drawH / 2, drawW, drawH);
         ctx.restore();
         
         // Draw drop target highlight if dragging
@@ -121,6 +170,16 @@ const Editor = (() => {
           ctx.fillRect(sx, sy, sw, sh);
           ctx.strokeStyle = '#4B3FA0';
           ctx.lineWidth = 4;
+          ctx.strokeRect(sx, sy, sw, sh);
+          ctx.restore();
+        }
+
+        // Draw selected highlight
+        if (selectedPhotoIndex === i) {
+          ctx.save();
+          ctx.strokeStyle = '#FF2D55';
+          ctx.lineWidth = 4;
+          ctx.setLineDash([8, 8]);
           ctx.strokeRect(sx, sy, sw, sh);
           ctx.restore();
         }
@@ -239,6 +298,59 @@ const Editor = (() => {
     render();
   }
 
+  function setupPhotoSliders() {
+    if (!sliderScale) return;
+    
+    const updatePhoto = (key, value) => {
+      if (selectedPhotoIndex !== null && cameraData.photos[selectedPhotoIndex]) {
+        cameraData.photos[selectedPhotoIndex][key] = value;
+        render();
+      }
+    };
+
+    sliderScale.addEventListener('input', (e) => {
+      valScale.textContent = e.target.value + '%';
+      updatePhoto('scale', e.target.value / 100);
+    });
+    sliderRotate.addEventListener('input', (e) => {
+      valRotate.textContent = e.target.value + '°';
+      updatePhoto('rotation', parseFloat(e.target.value));
+    });
+    sliderBrightness.addEventListener('input', (e) => updatePhoto('brightness', parseInt(e.target.value)));
+    sliderContrast.addEventListener('input', (e) => updatePhoto('contrast', parseInt(e.target.value)));
+    sliderSaturate.addEventListener('input', (e) => updatePhoto('saturate', parseInt(e.target.value)));
+    sliderHue.addEventListener('input', (e) => updatePhoto('hue', parseInt(e.target.value)));
+    
+    if (btnResetPhoto) {
+      btnResetPhoto.addEventListener('click', () => {
+        if (selectedPhotoIndex !== null && cameraData.photos[selectedPhotoIndex]) {
+          const p = cameraData.photos[selectedPhotoIndex];
+          p.offsetX = 0; p.offsetY = 0; p.scale = 1; p.rotation = 0;
+          p.brightness = 100; p.contrast = 100; p.saturate = 100; p.hue = 0;
+          updatePhotoSlidersUI();
+          render();
+        }
+      });
+    }
+  }
+
+  function updatePhotoSlidersUI() {
+    if (!sliderScale || selectedPhotoIndex === null) return;
+    const p = cameraData.photos[selectedPhotoIndex];
+    if (!p) return;
+    
+    sliderScale.value = (p.scale || 1) * 100;
+    valScale.textContent = sliderScale.value + '%';
+    
+    sliderRotate.value = p.rotation || 0;
+    valRotate.textContent = sliderRotate.value + '°';
+    
+    sliderBrightness.value = p.brightness || 100;
+    sliderContrast.value = p.contrast || 100;
+    sliderSaturate.value = p.saturate || 100;
+    sliderHue.value = p.hue || 0;
+  }
+
   // ── Drag & Drop ──────────────────────────────────────────
   function setupCanvasEvents() {
     canvas.addEventListener('mousedown', onPointerDown);
@@ -295,6 +407,13 @@ const Editor = (() => {
           dragLastX = pos.x;
           dragLastY = pos.y;
           dropTargetIndex = i;
+          
+          if (selectedPhotoIndex !== i) {
+            selectedPhotoIndex = i;
+            updatePhotoSlidersUI();
+            render();
+          }
+          
           e.preventDefault();
           return;
         }

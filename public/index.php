@@ -424,6 +424,64 @@ $jsConfig = json_encode([
             </div>
           </div>
 
+          <!-- Photo Transform -->
+          <div class="options-card" id="photo-transform-card">
+            <h3 class="card-title">Atur Posisi Foto</h3>
+            <p class="card-desc" style="color:var(--primary);font-weight:600;font-size:11px;margin-bottom:12px;">Klik foto di kanvas untuk memilih slot.</p>
+            
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:600;">Zoom / Skala</label>
+                <span id="zoom-val" style="font-size:11px;color:var(--text-muted);">100%</span>
+              </div>
+              <input type="range" id="photo-scale" min="50" max="300" value="100" style="width:100%;">
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:600;">Rotasi</label>
+                <span id="rotate-val" style="font-size:11px;color:var(--text-muted);">0&deg;</span>
+              </div>
+              <input type="range" id="photo-rotate" min="-180" max="180" value="0" style="width:100%;">
+            </div>
+          </div>
+
+          <!-- Photo Adjustments -->
+          <div class="options-card" id="photo-adjust-card">
+            <h3 class="card-title">Penyesuaian Warna</h3>
+            
+            <div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:600;">Kecerahan</label>
+              </div>
+              <input type="range" id="photo-brightness" min="0" max="200" value="100" style="width:100%;">
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:600;">Kontras</label>
+              </div>
+              <input type="range" id="photo-contrast" min="0" max="200" value="100" style="width:100%;">
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:600;">Saturasi</label>
+              </div>
+              <input type="range" id="photo-saturate" min="0" max="300" value="100" style="width:100%;">
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:600;">Rona (Hue)</label>
+              </div>
+              <input type="range" id="photo-hue" min="-180" max="180" value="0" style="width:100%;">
+            </div>
+            
+            <button id="reset-photo-btn" class="btn btn-ghost" style="width:100%;margin-top:8px;padding:8px;font-size:12px;">Reset Foto Terpilih</button>
+          </div>
+
+
           <!-- Sticker Corner -->
           <div class="options-card">
             <h3 class="card-title">Sticker Corner</h3>
