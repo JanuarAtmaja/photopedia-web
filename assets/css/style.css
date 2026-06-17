@@ -441,8 +441,8 @@ button { cursor: pointer; font-family: var(--font); }
 
 .frames-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
 }
 
 .frame-card {
@@ -497,10 +497,10 @@ button { cursor: pointer; font-family: var(--font); }
 }
 
 .frame-info {
-  padding: 14px 16px;
+  padding: 10px 12px;
 }
 .frame-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 2px;
