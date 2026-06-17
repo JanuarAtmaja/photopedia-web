@@ -66,7 +66,7 @@ function get_frames(): array
                 ['x' => 8.06, 'y' => 3.4, 'width' => 83.73, 'height' => 34.97],
                 ['x' => 8.2, 'y' => 34.32, 'width' => 83.73, 'height' => 34.97],
             ],
-            'the-jeblog-sambutlah' => [
+            'the-jeblogs-sambutlah' => [
                 ['x' => 3.96, 'y' => 4.15, 'width' => 92.5, 'height' => 22.16],
                 ['x' => 3.96, 'y' => 27.86, 'width' => 92.5, 'height' => 22.16],
                 ['x' => 3.96, 'y' => 51.58, 'width' => 92.5, 'height' => 22.16],
