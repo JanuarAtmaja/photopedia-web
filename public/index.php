@@ -5,7 +5,11 @@ require_once dirname(__DIR__) . '/config/helpers.php';
 // ── Routing untuk API calls ─────────────────────────────────
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-
+// Redirect API calls ke handler-nya
+if ($uri === '/api/send-email.php' || $uri === '/api/send-email') {
+    require_once dirname(__DIR__) . '/api/send-email.php';
+    exit;
+}
 if ($uri === '/api/frames.php' || $uri === '/api/frames') {
     require_once dirname(__DIR__) . '/api/frames.php';
     exit;

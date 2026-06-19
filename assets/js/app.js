@@ -137,60 +137,23 @@ const App = (() => {
     });
   }
 
-  // ── Send email via EmailJS API ────────────────────────────
+  // ── Send email via PHP API ────────────────────────────────
   async function sendEmail(emailAddress) {
     if (!state.uploadedUrl) throw new Error('Foto belum diunggah');
 
-    const name = emailAddress.split('@')[0];
-    const photoUrl = state.uploadedUrl;
-
-    const emailHtml = `
-      <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:32px;margin-bottom:32px;box-shadow:0 4px 24px rgba(75,63,160,0.12);font-family:'Segoe UI',Arial,sans-serif;">
-        <div style="background:linear-gradient(135deg,#4B3FA0 0%,#6B5FD0 100%);padding:40px 32px;text-align:center;">
-          <h1 style="color:#ffffff;font-size:28px;margin:0;font-weight:700;letter-spacing:-0.5px;">📸 Photopedia</h1>
-          <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:15px;">Foto kamu sudah siap, ${name}!</p>
-        </div>
-        <div style="padding:40px 32px;">
-          <p style="color:#1E1B4B;font-size:16px;line-height:1.6;margin:0 0 24px;">
-            Hei <strong>${name}</strong>! 🎉<br><br>
-            Terima kasih sudah pakai <strong>Photopedia</strong>. Foto kamu sudah siap diunduh!
-          </p>
-          <div style="text-align:center;margin-bottom:32px;">
-            <img src="${photoUrl}" alt="Foto Photopedia" style="max-width:100%;border-radius:12px;border:3px solid #EDE8F5;box-shadow:0 4px 16px rgba(75,63,160,0.15);" />
-          </div>
-          <div style="text-align:center;margin-bottom:32px;">
-            <a href="${photoUrl}" target="_blank" 
-               style="display:inline-block;background:linear-gradient(135deg,#4B3FA0,#6B5FD0);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-weight:600;font-size:15px;letter-spacing:0.3px;">
-              ⬇️ Unduh Foto HD
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const payload = {
-      service_id: EMAILJS_SERVICE_ID,
-      template_id: EMAILJS_TEMPLATE_ID,
-      user_id: EMAILJS_PUBLIC_KEY,
-      template_params: {
-        subject: "Photopedia - Your Photo",
-        message_html: emailHtml,
-        to_email: emailAddress,
-        to_name: name
-      }
-    };
-
-    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
+    const resp = await fetch('/api/send-email.php', {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body:    JSON.stringify({
+        to:         emailAddress,
+        photo_url:  state.uploadedUrl,
+        session_id: state.sessionId,
+        name:       emailAddress.split('@')[0],
+      }),
     });
-
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      throw new Error('Gagal kirim email: ' + errorText);
-    }
-    return true;
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error ?? 'Gagal kirim email');
+    return data;
   }
 
   // ── Toast notifications ────────────────────────────────────
