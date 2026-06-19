@@ -1,5 +1,5 @@
 <?php
-// api/upload.php — Upload foto ke Supabase Storage
+// api/upload.php — Upload foto ke Supabase Storage + simpan ke database
 // POST /api/upload  (multipart/form-data, field: "photo")
 
 require_once dirname(__DIR__) . '/config/helpers.php';
@@ -30,38 +30,37 @@ if ($file['size'] > $maxSize) {
 }
 
 // ── Konfigurasi Supabase ──────────────────────────────────────
-$supabaseUrl        = env('SUPABASE_URL');
-$serviceRoleKey     = env('SUPABASE_SERVICE_ROLE_KEY');
-$bucket             = env('SUPABASE_BUCKET', 'photopedia-photos');
+$supabaseUrl    = env('SUPABASE_URL');
+$serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY');
+$bucket         = env('SUPABASE_BUCKET', 'photopedia-photos');
 
 if (!$supabaseUrl || !$serviceRoleKey) {
     respond_json(['error' => 'Supabase not configured'], 500);
 }
 
 // ── Buat path unik: sessions/YYYY/MM/DD/<uuid>.jpg ───────────
-$ext       = match ($mimeType) {
+$ext      = match ($mimeType) {
     'image/png'  => 'png',
     'image/webp' => 'webp',
     default      => 'jpg',
 };
-$date      = date('Y/m/d');
-$uuid      = bin2hex(random_bytes(8)); // 16 hex chars
-$filePath  = "sessions/{$date}/{$uuid}.{$ext}";
+$date     = date('Y/m/d');
+$uuid     = bin2hex(random_bytes(8)); // 16 hex chars
+$filePath = "sessions/{$date}/{$uuid}.{$ext}";
 
 // ── Upload ke Supabase Storage ────────────────────────────────
-$endpoint = rtrim($supabaseUrl, '/') . '/storage/v1/object/' . urlencode($bucket) . '/' . $filePath;
+$storageEndpoint = rtrim($supabaseUrl, '/') . '/storage/v1/object/' . urlencode($bucket) . '/' . $filePath;
+$fileContent     = file_get_contents($file['tmp_name']);
 
-$fileContent = file_get_contents($file['tmp_name']);
-
-$ch = curl_init($endpoint);
+$ch = curl_init($storageEndpoint);
 curl_setopt_array($ch, [
     CURLOPT_CUSTOMREQUEST  => 'POST',
     CURLOPT_POSTFIELDS     => $fileContent,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER     => [
         'Authorization: Bearer ' . $serviceRoleKey,
-        'apikey: ' . $serviceRoleKey,
-        'Content-Type: ' . $mimeType,
+        'apikey: '             . $serviceRoleKey,
+        'Content-Type: '       . $mimeType,
         'x-upsert: false',
     ],
 ]);
@@ -88,9 +87,38 @@ if ($httpCode < 200 || $httpCode >= 300) {
 // ── Buat public URL ───────────────────────────────────────────
 $publicUrl = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . urlencode($bucket) . '/' . $filePath;
 
-respond_json([
-    'success'    => true,
+// ── Simpan metadata ke database Supabase (tabel: photos) ─────
+$dbEndpoint = rtrim($supabaseUrl, '/') . '/rest/v1/photos';
+$dbPayload  = json_encode([
     'url'        => $publicUrl,
     'path'       => $filePath,
     'session_id' => $uuid,
+]);
+
+$chDb = curl_init($dbEndpoint);
+curl_setopt_array($chDb, [
+    CURLOPT_CUSTOMREQUEST  => 'POST',
+    CURLOPT_POSTFIELDS     => $dbPayload,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER     => [
+        'Authorization: Bearer ' . $serviceRoleKey,
+        'apikey: '             . $serviceRoleKey,
+        'Content-Type: application/json',
+        'Prefer: return=minimal',
+    ],
+]);
+
+$dbResponse = curl_exec($chDb);
+$dbCode     = curl_getinfo($chDb, CURLINFO_HTTP_CODE);
+curl_close($chDb);
+
+// DB insert gagal tidak membatalkan upload (tetap kembalikan URL)
+$dbOk = ($dbCode >= 200 && $dbCode < 300);
+
+respond_json([
+    'success'     => true,
+    'url'         => $publicUrl,
+    'path'        => $filePath,
+    'session_id'  => $uuid,
+    'saved_to_db' => $dbOk,
 ]);
