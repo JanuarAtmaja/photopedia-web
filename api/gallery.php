@@ -5,6 +5,8 @@
 require_once dirname(__DIR__) . '/config/helpers.php';
 
 set_cors_headers();
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     respond_json(['error' => 'Method not allowed'], 405);

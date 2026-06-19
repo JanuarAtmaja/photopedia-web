@@ -275,7 +275,7 @@ const App = (() => {
     if (container.dataset.loaded === 'true') return;
 
     try {
-      const resp = await fetch('/api/gallery.php');
+      const resp = await fetch('/api/gallery.php?t=' + Date.now());
       const data = await resp.json();
       const images = data.images ?? [];
 
