@@ -14,7 +14,6 @@ const App = (() => {
   };
 
   // ── Keys & Credentials ───────────────────────────────────────
-  const IMGBB_API_KEY = '71bcc799562d110a1c759a354b83f891';
   const EMAILJS_SERVICE_ID = 'service_jrtwg0r';
   const EMAILJS_TEMPLATE_ID = 'template_phhf1fc';
   const EMAILJS_PUBLIC_KEY = 'bECI-fTXCod1jZak3';
@@ -70,27 +69,24 @@ const App = (() => {
     state.currentPhoto = dataUrl;
   }
 
-  // ── Upload to ImgBB ─────────────────────────────────────────
-  async function uploadToImgBB(blob) {
+  // ── Upload to Supabase Storage (via PHP proxy) ──────────────
+  async function uploadToSupabase(blob) {
     const formData = new FormData();
-    formData.append('image', blob);
+    formData.append('photo', blob, 'photo.jpg');
 
-    const endpoint = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
-    const resp = await fetch(endpoint, {
+    const resp = await fetch('/api/upload.php', {
       method: 'POST',
       body: formData,
     });
 
     const data = await resp.json();
     if (!resp.ok || !data.success) {
-      throw new Error(data.error?.message ?? `Upload failed: ${resp.status}`);
+      throw new Error(data.error ?? `Upload failed: ${resp.status}`);
     }
 
-    // Return the original HD URL from ImgBB (not display_url which is compressed)
-    const publicUrl = data.data.url;
-    state.uploadedUrl = publicUrl;
-    state.sessionId = generateId(); // Just for local reference/QR
-    return publicUrl;
+    state.uploadedUrl = data.url;
+    state.sessionId   = data.session_id;
+    return data.url;
   }
 
   // ── Load export preview ────────────────────────────────────
@@ -100,11 +96,11 @@ const App = (() => {
     state.editedDataUrl = dataUrl;
     if (previewImg) previewImg.src = dataUrl;
 
-    // Upload to ImgBB in background
+    // Upload to Supabase Storage
     try {
       showToast('⬆️ Mengunggah foto…', 'info');
       const blob = await Editor.exportBlob();
-      const url  = await uploadToImgBB(blob);
+      const url  = await uploadToSupabase(blob);
       showToast('✅ Foto berhasil diunggah!', 'success');
       generateQR(url);
       // Enable download button

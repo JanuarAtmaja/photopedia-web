@@ -9,6 +9,7 @@ const Editor = (() => {
   // State
   let globalFilter = 'none';
   let stickers = []; // Array of { type: 'emoji'|'text', content, x, y, size, color }
+  let activeSticker = null;
   
   // Drag state
   let isDragging = false;
@@ -41,6 +42,7 @@ const Editor = (() => {
   const valScale = document.getElementById('zoom-val');
   const valRotate = document.getElementById('rotate-val');
   const btnResetPhoto = document.getElementById('reset-photo-btn');
+  let btnDeleteSticker = document.getElementById('delete-sticker-btn');
   
   // Available filters (matches camera)
   const FILTERS = [
@@ -95,6 +97,32 @@ const Editor = (() => {
     setupTextTool();
     setupPhotoSliders();
     updatePhotoSlidersUI();
+
+    // Inject delete button dynamically if missing
+    if (!btnDeleteSticker) {
+      btnDeleteSticker = document.createElement('button');
+      btnDeleteSticker.id = 'delete-sticker-btn';
+      btnDeleteSticker.innerHTML = '🗑️ Hapus Sticker';
+      btnDeleteSticker.style.cssText = 'position: absolute; top: 16px; right: 16px; display: none; background: #FF3B30; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 13px; cursor: pointer; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); pointer-events: auto;';
+      const canvasWrap = document.querySelector('.editor-canvas-wrap');
+      if (canvasWrap) {
+        canvasWrap.style.position = 'relative';
+        canvasWrap.appendChild(btnDeleteSticker);
+      }
+    }
+
+    if (btnDeleteSticker) {
+      btnDeleteSticker.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeSticker) {
+          stickers = stickers.filter(s => s !== activeSticker);
+          activeSticker = null;
+          btnDeleteSticker.style.display = 'none';
+          render();
+        }
+      };
+    }
 
     // Load frame image
     frameImage = new Image();
@@ -212,6 +240,21 @@ const Editor = (() => {
           ctx.strokeText(st.content, st.x, st.y);
         }
         ctx.fillText(st.content, st.x, st.y);
+        
+        // Draw selected outline if active
+        if (activeSticker === st) {
+          ctx.font = `${st.size}px "Inter", sans-serif`;
+          const metrics = ctx.measureText(st.content);
+          const width = metrics.width;
+          const height = st.size;
+          
+          ctx.save();
+          ctx.strokeStyle = '#FF2D55';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([6, 6]);
+          ctx.strokeRect(st.x - width/2 - 10, st.y - height/2 - 10, width + 20, height + 20);
+          ctx.restore();
+        }
       }
       ctx.restore();
     });
@@ -441,11 +484,24 @@ const Editor = (() => {
       if (Math.abs(pos.x - st.x) <= width/2 && Math.abs(pos.y - st.y) <= height/2) {
         isDragging = true;
         dragSticker = st;
+        if (activeSticker !== st) {
+          activeSticker = st;
+          selectedPhotoIndex = null;
+          updatePhotoSlidersUI();
+          if (btnDeleteSticker) btnDeleteSticker.style.display = 'block';
+          render();
+        }
         dragOffsetX = pos.x - st.x;
         dragOffsetY = pos.y - st.y;
         e.preventDefault();
         return;
       }
+    }
+
+    if (activeSticker) {
+      activeSticker = null;
+      if (btnDeleteSticker) btnDeleteSticker.style.display = 'none';
+      render();
     }
 
     // Check if clicked inside a photo slot
@@ -573,10 +629,13 @@ const Editor = (() => {
   function exportDataUrl() {
     // Ensure final render without selection outline
     const temp = selectedPhotoIndex;
+    const tempSticker = activeSticker;
     selectedPhotoIndex = null;
+    activeSticker = null;
     render();
     const data = canvas.toDataURL('image/jpeg', 0.95);
     selectedPhotoIndex = temp;
+    activeSticker = tempSticker;
     render();
     return data;
   }
@@ -584,10 +643,13 @@ const Editor = (() => {
   function exportBlob() {
     return new Promise(resolve => {
       const temp = selectedPhotoIndex;
+      const tempSticker = activeSticker;
       selectedPhotoIndex = null;
+      activeSticker = null;
       render();
       canvas.toBlob(blob => {
         selectedPhotoIndex = temp;
+        activeSticker = tempSticker;
         render();
         resolve(blob);
       }, 'image/jpeg', 0.95);
