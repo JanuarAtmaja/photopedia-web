@@ -11,14 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $supabaseUrl    = env('SUPABASE_URL');
-$supabaseAnonKey = env('SUPABASE_ANON_KEY');
+$serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY'); // pakai service role agar bypass RLS
 
-if (!$supabaseUrl || !$supabaseAnonKey) {
+if (!$supabaseUrl || !$serviceRoleKey) {
     respond_json(['error' => 'Supabase not configured'], 500);
 }
 
 // ── Query tabel photos, urut terbaru dulu, limit 60 ──────────
-// PostgREST: GET /rest/v1/photos?select=*&order=created_at.desc&limit=60
 $endpoint = rtrim($supabaseUrl, '/') . '/rest/v1/photos'
     . '?select=id,url,session_id,created_at'
     . '&order=created_at.desc'
@@ -28,8 +27,8 @@ $ch = curl_init($endpoint);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER     => [
-        'Authorization: Bearer ' . $supabaseAnonKey,
-        'apikey: '             . $supabaseAnonKey,
+        'Authorization: Bearer ' . $serviceRoleKey,
+        'apikey: '             . $serviceRoleKey,
         'Content-Type: application/json',
         'Accept: application/json',
     ],
@@ -41,7 +40,7 @@ $curlErr  = curl_error($ch);
 curl_close($ch);
 
 if ($curlErr) {
-    respond_json(['error' => 'cURL error: ' . $curlErr], 500);
+    respond_json(['error' => 'cURL error: ' . $curlErr, 'images' => []], 500);
 }
 
 if ($httpCode < 200 || $httpCode >= 300) {
@@ -49,6 +48,7 @@ if ($httpCode < 200 || $httpCode >= 300) {
         'error'   => 'Failed to fetch from database',
         'details' => json_decode($response, true),
         'status'  => $httpCode,
+        'images'  => [],
     ], 502);
 }
 

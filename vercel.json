@@ -16,6 +16,9 @@
       "runtime": "vercel-php@0.7.2",
       "maxDuration": 30
     },
+    "api/debug.php": {
+      "runtime": "vercel-php@0.7.2"
+    },
     "api/index.php": {
       "runtime": "vercel-php@0.7.2"
     }
@@ -36,6 +39,10 @@
     {
       "src": "/api/upload(.php)?",
       "dest": "/api/upload.php"
+    },
+    {
+      "src": "/api/debug(.php)?",
+      "dest": "/api/debug.php"
     },
     {
       "src": "/(.*)",
