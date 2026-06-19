@@ -86,8 +86,8 @@ const App = (() => {
       throw new Error(data.error?.message ?? `Upload failed: ${resp.status}`);
     }
 
-    // Return the direct display URL from ImgBB
-    const publicUrl = data.data.display_url;
+    // Return the original HD URL from ImgBB (not display_url which is compressed)
+    const publicUrl = data.data.url;
     state.uploadedUrl = publicUrl;
     state.sessionId = generateId(); // Just for local reference/QR
     return publicUrl;

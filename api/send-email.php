@@ -126,6 +126,12 @@ try {
     $mail->Body    = $emailHtml;
     $mail->AltBody = "Hei {$name}! Foto kamu sudah siap diunduh. Silakan buka link berikut: {$photoUrl}";
 
+    // Attach foto HD langsung dari ImgBB
+    $imageData = @file_get_contents($photoUrl);
+    if ($imageData !== false) {
+        $mail->addStringAttachment($imageData, 'photopedia-photo.jpg', 'base64', 'image/jpeg');
+    }
+
     $mail->send();
     respond_json(['success' => true, 'message' => 'Email sent via SMTP']);
 } catch (Exception $e) {
