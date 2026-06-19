@@ -1450,3 +1450,37 @@ input:checked + .slider:before { transform: translateX(20px); }
 .gallery-delete-btn:active {
   transform: scale(0.9) !important;
 }
+
+.gallery-email-btn {
+  position: absolute;
+  top: 10px;
+  right: 56px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(75, 63, 160, 0.9);
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s;
+  box-shadow: 0 2px 8px rgba(75, 63, 160, 0.5);
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+.gallery-item:hover .gallery-email-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.gallery-email-btn:hover {
+  background: #392b86;
+  transform: scale(1.1) !important;
+}
+.gallery-email-btn:active {
+  transform: scale(0.9) !important;
+}

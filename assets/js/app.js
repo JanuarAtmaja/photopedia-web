@@ -297,10 +297,42 @@ const App = (() => {
           <button class="gallery-delete-btn" title="Sembunyikan foto ini" aria-label="Sembunyikan foto">
             🗑️
           </button>
+          <button class="gallery-email-btn" title="Kirim ke email" aria-label="Kirim email">
+            📧
+          </button>
         `;
 
         // Klik gambar → lightbox
         item.querySelector('.gallery-thumb').addEventListener('click', () => openLightbox(img.url));
+
+        // Klik email → send email
+        item.querySelector('.gallery-email-btn').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const email = prompt('Kirim foto ini ke email mana?');
+          if (!email || !email.trim()) return;
+
+          try {
+            showToast('📧 Mengirim email...', 'info', 2000);
+            const resp = await fetch('/api/send-email.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: email.trim(),
+                photo_url: img.url,
+                session_id: img.session_id || 'gallery',
+                name: email.trim().split('@')[0],
+              }),
+            });
+            const resData = await resp.json();
+            if (resData.success || resp.ok) {
+              showToast('✅ Email berhasil dikirim', 'success');
+            } else {
+              showToast('❌ Gagal: ' + (resData.error || 'Unknown error'), 'error');
+            }
+          } catch (err) {
+            showToast('❌ Terjadi kesalahan pengiriman', 'error');
+          }
+        });
 
         // Klik hapus → soft delete
         item.querySelector('.gallery-delete-btn').addEventListener('click', async (e) => {
