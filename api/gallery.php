@@ -20,6 +20,7 @@ if (!$supabaseUrl || !$serviceRoleKey) {
 // ── Query tabel photos, urut terbaru dulu, limit 60 ──────────
 $endpoint = rtrim($supabaseUrl, '/') . '/rest/v1/photos'
     . '?select=id,url,session_id,created_at'
+    . '&hidden=eq.false'
     . '&order=created_at.desc'
     . '&limit=60';
 

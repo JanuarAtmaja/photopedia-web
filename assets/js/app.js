@@ -288,13 +288,47 @@ const App = (() => {
       images.forEach(img => {
         const item = document.createElement('div');
         item.className = 'gallery-item';
-        // Add a small thumbnail URL if using transformation, but for now we use the main URL
+        item.dataset.id = img.id;
+        item.style.cssText = 'position:relative;overflow:hidden;';
         item.innerHTML = `
           <div class="gallery-thumb">
             <img src="${img.url}" alt="Photopedia Gallery Image" loading="lazy">
           </div>
+          <button class="gallery-delete-btn" title="Sembunyikan foto ini" aria-label="Sembunyikan foto">
+            🗑️
+          </button>
         `;
-        item.addEventListener('click', () => openLightbox(img.url));
+
+        // Klik gambar → lightbox
+        item.querySelector('.gallery-thumb').addEventListener('click', () => openLightbox(img.url));
+
+        // Klik hapus → soft delete
+        item.querySelector('.gallery-delete-btn').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!confirm('Sembunyikan foto ini dari gallery?')) return;
+
+          try {
+            const delResp = await fetch('/api/delete-photo.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: img.id }),
+            });
+            const delData = await delResp.json();
+
+            if (delData.success) {
+              item.style.transition = 'opacity 0.3s, transform 0.3s';
+              item.style.opacity = '0';
+              item.style.transform = 'scale(0.85)';
+              setTimeout(() => item.remove(), 300);
+              showToast('🗑️ Foto disembunyikan dari gallery', 'success');
+            } else {
+              showToast('❌ Gagal menyembunyikan foto', 'error');
+            }
+          } catch (err) {
+            showToast('❌ Terjadi kesalahan', 'error');
+          }
+        });
+
         container.appendChild(item);
       });
       container.dataset.loaded = 'true';

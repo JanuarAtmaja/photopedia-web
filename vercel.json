@@ -19,6 +19,13 @@
     "api/debug.php": {
       "runtime": "vercel-php@0.7.2"
     },
+    "api/migrate.php": {
+      "runtime": "vercel-php@0.7.2",
+      "maxDuration": 60
+    },
+    "api/delete-photo.php": {
+      "runtime": "vercel-php@0.7.2"
+    },
     "api/index.php": {
       "runtime": "vercel-php@0.7.2"
     }
@@ -43,6 +50,14 @@
     {
       "src": "/api/debug(.php)?",
       "dest": "/api/debug.php"
+    },
+    {
+      "src": "/api/migrate(.php)?",
+      "dest": "/api/migrate.php"
+    },
+    {
+      "src": "/api/delete-photo(.php)?",
+      "dest": "/api/delete-photo.php"
     },
     {
       "src": "/(.*)",

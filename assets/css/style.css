@@ -1414,3 +1414,39 @@ input:checked + .slider:before { transform: translateX(20px); }
   .camera-actions-overlay { bottom: 16px; gap: 12px; }
   .camera-actions-overlay .floating-shutter { width: 56px; height: 56px; }
 }
+
+/* ── Gallery Delete Button ─────────────────────────────────── */
+.gallery-item { position: relative; }
+.gallery-delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(229, 62, 62, 0.9);
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.5);
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+.gallery-item:hover .gallery-delete-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.gallery-delete-btn:hover {
+  background: #c53030;
+  transform: scale(1.1) !important;
+}
+.gallery-delete-btn:active {
+  transform: scale(0.9) !important;
+}
