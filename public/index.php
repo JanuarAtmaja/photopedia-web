@@ -307,6 +307,9 @@ $jsConfig = json_encode([
               <button id="capture-btn" class="floating-shutter" aria-label="Ambil foto">
                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
               </button>
+              <button id="switch-camera-btn" class="floating-shutter" style="display:none; width:48px; height:48px;" aria-label="Ganti Kamera" title="Ganti Kamera">
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+              </button>
             </div>
             
             <!-- Dropzone Overlay -->
@@ -404,8 +407,11 @@ $jsConfig = json_encode([
       <div class="editor-layout">
         <!-- Preview (Left) -->
         <div class="editor-preview-pane">
-          <div class="editor-canvas-wrap">
+          <div class="editor-canvas-wrap" style="position: relative;">
             <canvas id="edit-canvas" aria-label="Canvas editor foto"></canvas>
+            <button id="delete-sticker-btn" style="position: absolute; top: 16px; right: 16px; display: none; background: #FF3B30; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 13px; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.2s;">
+              🗑️ Hapus Sticker
+            </button>
           </div>
         </div>
 
@@ -585,8 +591,9 @@ $jsConfig = json_encode([
             <h3>Kirim via Email</h3>
             <form id="email-form" class="email-form" novalidate>
               <input type="email" id="email-input"
-                     placeholder="email@kamu.com"
+                     placeholder="email1@kamu.com, email2@kamu.com"
                      required autocomplete="email"
+                     multiple
                      aria-label="Alamat email tujuan"
                      aria-required="true">
               <button id="send-email-btn" type="submit" class="btn btn-primary"
@@ -659,9 +666,9 @@ $jsConfig = json_encode([
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App modules -->
-<script src="/assets/js/camera.js?v=22"></script>
-<script src="/assets/js/editor.js?v=22"></script>
-<script src="/assets/js/app.js?v=22"></script>
+<script src="/assets/js/camera.js?v=27"></script>
+<script src="/assets/js/editor.js?v=27"></script>
+<script src="/assets/js/app.js?v=27"></script>
 
 </body>
 </html>
