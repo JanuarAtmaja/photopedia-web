@@ -138,38 +138,73 @@ const Camera = (() => {
   }
 
   // ── Countdown then capture ───────────────────────────────
+  let isContinuousShooting = false;
+
   async function triggerCapture() {
     if (!stream || currentSlotIndex >= frameData.slots.length) return;
-    captureBtn.disabled = true;
+    if (isContinuousShooting) return; // Prevent double-trigger
 
-    // Countdown
+    // If timer is set, run continuous shutter for all remaining slots
     if (captureDelay > 0) {
-      countdown.classList.add('active');
-      for (let i = captureDelay; i > 0; i--) {
-        countdown.textContent = i;
-        await sleep(1000);
+      isContinuousShooting = true;
+      captureBtn.disabled = true;
+
+      while (currentSlotIndex < frameData.slots.length) {
+        // Countdown for this shot
+        countdown.classList.add('active');
+        for (let i = captureDelay; i > 0; i--) {
+          countdown.textContent = i;
+          await sleep(1000);
+        }
+        // Show "📸" briefly before shooting
+        countdown.textContent = '📸';
+        await sleep(300);
+        countdown.classList.remove('active');
+
+        // Flash + capture
+        flashEl?.classList.add('active');
+        captureSlot(currentSlotIndex);
+        await sleep(150);
+        flashEl?.classList.remove('active');
+
+        // Advance slot
+        currentSlotIndex++;
+        if (currentSlotIndex >= frameData.slots.length) {
+          currentSlotIndex = frameData.slots.length;
+        }
+
+        renderStrip();
+        checkCompletion();
+
+        // Stop if all slots done
+        if (currentSlotIndex >= frameData.slots.length) break;
+
+        // Brief pause between shots (feel natural)
+        await sleep(400);
       }
-      countdown.classList.remove('active');
+
+      isContinuousShooting = false;
+      captureBtn.disabled = false;
+    } else {
+      // No timer — single shot as usual
+      captureBtn.disabled = true;
+
+      // Flash + capture immediately
+      flashEl?.classList.add('active');
+      captureSlot(currentSlotIndex);
+      await sleep(100);
+      flashEl?.classList.remove('active');
+
+      // Advance slot
+      currentSlotIndex++;
+      if (currentSlotIndex >= frameData.slots.length) {
+        currentSlotIndex = frameData.slots.length;
+      }
+
+      renderStrip();
+      checkCompletion();
+      captureBtn.disabled = false;
     }
-
-    // Flash
-    flashEl?.classList.add('active');
-    
-    // Capture the slot (cropped to aspect ratio)
-    captureSlot(currentSlotIndex);
-
-    await sleep(100);
-    flashEl?.classList.remove('active');
-
-    // Advance slot
-    currentSlotIndex++;
-    if (currentSlotIndex >= frameData.slots.length) {
-      currentSlotIndex = frameData.slots.length; 
-    }
-    
-    renderStrip();
-    checkCompletion();
-    captureBtn.disabled = false;
   }
 
   // ── Manual Upload & Drag Drop ────────────────────────────
@@ -335,8 +370,10 @@ const Camera = (() => {
         // Add delete button
         const delBtn = document.createElement('div');
         delBtn.innerHTML = '×';
-        delBtn.style.cssText = 'position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:white;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;line-height:1;z-index:2;';
+        delBtn.style.cssText = 'position:absolute;top:4px;right:4px;background:#e53e3e;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer;line-height:1;z-index:2;box-shadow:0 2px 6px rgba(229,62,62,0.5);transition:background 0.15s;';
         delBtn.title = 'Hapus foto ini';
+        delBtn.onmouseenter = () => delBtn.style.background = '#c53030';
+        delBtn.onmouseleave = () => delBtn.style.background = '#e53e3e';
         delBtn.onclick = (e) => {
           e.stopPropagation();
           deletePhoto(i);
