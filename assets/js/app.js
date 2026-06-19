@@ -13,10 +13,11 @@ const App = (() => {
     sessionId:     null,
   };
 
-  // ── Supabase config (injected from PHP into window) ────────
-  const SUPABASE_URL    = window.PHOTOPEDIA_CONFIG?.supabaseUrl    || '';
-  const SUPABASE_ANON   = window.PHOTOPEDIA_CONFIG?.supabaseAnon   || '';
-  const SUPABASE_BUCKET = window.PHOTOPEDIA_CONFIG?.supabaseBucket || 'photopedia-photos';
+  // ── Keys & Credentials ───────────────────────────────────────
+  const IMGBB_API_KEY = '71bcc799562d110a1c759a354b83f891';
+  const EMAILJS_SERVICE_ID = 'service_jrtwg0r';
+  const EMAILJS_TEMPLATE_ID = 'template_phhf1fc';
+  const EMAILJS_PUBLIC_KEY = 'bECI-fTXCod1jZak3';
 
   // ── Page navigation ────────────────────────────────────────
   function navigate(pageId) {
@@ -69,32 +70,26 @@ const App = (() => {
     state.currentPhoto = dataUrl;
   }
 
-  // ── Upload to Supabase directly from browser ───────────────
-  async function uploadToSupabase(blob) {
-    const sessionId = generateId();
-    const filename  = `sessions/${dateFolder()}/${sessionId}.jpg`;
-    const endpoint  = `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${filename}`;
+  // ── Upload to ImgBB ─────────────────────────────────────────
+  async function uploadToImgBB(blob) {
+    const formData = new FormData();
+    formData.append('image', blob);
 
+    const endpoint = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
     const resp = await fetch(endpoint, {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON}`,
-        'apikey': SUPABASE_ANON,
-        'Content-Type':  'image/jpeg',
-        'x-upsert':      'true',
-      },
-      body: blob,
+      method: 'POST',
+      body: formData,
     });
 
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.message ?? `Upload failed: ${resp.status}`);
+    const data = await resp.json();
+    if (!resp.ok || !data.success) {
+      throw new Error(data.error?.message ?? `Upload failed: ${resp.status}`);
     }
 
-    // Build public URL
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${filename}`;
+    // Return the direct display URL from ImgBB
+    const publicUrl = data.data.display_url;
     state.uploadedUrl = publicUrl;
-    state.sessionId   = sessionId;
+    state.sessionId = generateId(); // Just for local reference/QR
     return publicUrl;
   }
 
@@ -105,11 +100,11 @@ const App = (() => {
     state.editedDataUrl = dataUrl;
     if (previewImg) previewImg.src = dataUrl;
 
-    // Upload to Supabase in background
+    // Upload to ImgBB in background
     try {
       showToast('⬆️ Mengunggah foto…', 'info');
       const blob = await Editor.exportBlob();
-      const url  = await uploadToSupabase(blob);
+      const url  = await uploadToImgBB(blob);
       showToast('✅ Foto berhasil diunggah!', 'success');
       generateQR(url);
       // Enable download button
@@ -142,23 +137,34 @@ const App = (() => {
     });
   }
 
-  // ── Send email via PHP API ────────────────────────────────
+  // ── Send email via EmailJS API ────────────────────────────
   async function sendEmail(emailAddress) {
     if (!state.uploadedUrl) throw new Error('Foto belum diunggah');
 
-    const resp = await fetch('/api/send-email.php', {
-      method:  'POST',
+    const payload = {
+      service_id: EMAILJS_SERVICE_ID,
+      template_id: EMAILJS_TEMPLATE_ID,
+      user_id: EMAILJS_PUBLIC_KEY,
+      template_params: {
+        subject: "Photopedia - Your Photo",
+        message: "Terima kasih telah menggunakan Photopedia! Berikut adalah foto kenanganmu.",
+        photo_url: state.uploadedUrl,
+        to_email: emailAddress,
+        to_name: emailAddress.split('@')[0]
+      }
+    };
+
+    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        to:         emailAddress,
-        photo_url:  state.uploadedUrl,
-        session_id: state.sessionId,
-        name:       emailAddress.split('@')[0],
-      }),
+      body: JSON.stringify(payload),
     });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error ?? 'Gagal kirim email');
-    return data;
+
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error('Gagal kirim email: ' + errorText);
+    }
+    return true;
   }
 
   // ── Toast notifications ────────────────────────────────────
@@ -358,7 +364,7 @@ const App = (() => {
 
       try {
         await sendEmail(email);
-        showToast('✅ Email berhasil dikirim ke ' + email, 'success');
+        showToast('✅ Email berhasil dikirim', 'success');
         form.reset();
       } catch (err) {
         showToast('❌ ' + err.message, 'error');

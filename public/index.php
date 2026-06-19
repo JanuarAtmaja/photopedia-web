@@ -5,11 +5,7 @@ require_once dirname(__DIR__) . '/config/helpers.php';
 // ── Routing untuk API calls ─────────────────────────────────
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Redirect API calls ke handler-nya
-if ($uri === '/api/send-email.php' || $uri === '/api/send-email') {
-    require_once dirname(__DIR__) . '/api/send-email.php';
-    exit;
-}
+
 if ($uri === '/api/frames.php' || $uri === '/api/frames') {
     require_once dirname(__DIR__) . '/api/frames.php';
     exit;
@@ -56,9 +52,6 @@ if ($isAsset || $isRootAsset) {
 
 // ── Config untuk JS (dikirim aman, bukan expose secret) ─────
 $jsConfig = json_encode([
-    'supabaseUrl'    => env('SUPABASE_URL', ''),
-    'supabaseAnon'   => env('SUPABASE_ANON_KEY', ''),
-    'supabaseBucket' => env('SUPABASE_BUCKET', 'photopedia-photos'),
     'appEnv'         => env('APP_ENV', 'production'),
 ], JSON_HEX_TAG | JSON_HEX_QUOT);
 
@@ -666,9 +659,9 @@ $jsConfig = json_encode([
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App modules -->
-<script src="/assets/js/camera.js?v=27"></script>
-<script src="/assets/js/editor.js?v=27"></script>
-<script src="/assets/js/app.js?v=27"></script>
+<script src="/assets/js/camera.js?v=28"></script>
+<script src="/assets/js/editor.js?v=28"></script>
+<script src="/assets/js/app.js?v=28"></script>
 
 </body>
 </html>
