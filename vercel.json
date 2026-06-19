@@ -12,6 +12,10 @@
     "api/gallery.php": {
       "runtime": "vercel-php@0.7.2"
     },
+    "api/upload.php": {
+      "runtime": "vercel-php@0.7.2",
+      "maxDuration": 30
+    },
     "api/index.php": {
       "runtime": "vercel-php@0.7.2"
     }
@@ -28,6 +32,10 @@
     {
       "src": "/api/gallery(.php)?",
       "dest": "/api/gallery.php"
+    },
+    {
+      "src": "/api/upload(.php)?",
+      "dest": "/api/upload.php"
     },
     {
       "src": "/(.*)",
