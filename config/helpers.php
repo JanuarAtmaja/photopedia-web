@@ -62,7 +62,7 @@ function get_frames(): array
                 ['x' => 10.89, 'y' => 35.02, 'width' => 78.36, 'height' => 22.11],
                 ['x' => 10.75, 'y' => 59.13, 'width' => 78.36, 'height' => 22.11],
             ],
-            'arctic-monkeys-wfn' => [
+            'arctic-monkeys-fwn' => [
                 ['x' => 5.52, 'y' => 2.7, 'width' => 88.97, 'height' => 31.47],
                 ['x' => 5.52, 'y' => 36.57, 'width' => 88.97, 'height' => 31.47],
             ],
