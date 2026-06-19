@@ -120,8 +120,9 @@ try {
     $mail->addAddress($to, $name);
 
     // Konten
+    $mail->CharSet  = 'UTF-8';
     $mail->isHTML(true);
-    $mail->Subject = '📸 Foto Photopedia Kamu Sudah Siap!';
+    $mail->Subject = 'Photopedia - Your Photo is Ready!';
     $mail->Body    = $emailHtml;
     $mail->AltBody = "Hei {$name}! Foto kamu sudah siap diunduh. Silakan buka link berikut: {$photoUrl}";
 
