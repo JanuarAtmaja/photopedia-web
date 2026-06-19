@@ -659,9 +659,9 @@ $jsConfig = json_encode([
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App modules -->
-<script src="/assets/js/camera.js?v=28"></script>
-<script src="/assets/js/editor.js?v=28"></script>
-<script src="/assets/js/app.js?v=28"></script>
+<script src="/assets/js/camera.js?v=29"></script>
+<script src="/assets/js/editor.js?v=29"></script>
+<script src="/assets/js/app.js?v=29"></script>
 
 </body>
 </html>
