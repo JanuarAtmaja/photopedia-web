@@ -17,8 +17,12 @@ const Camera = (() => {
   const flashEl    = document.getElementById('camera-flash');
   const errOverlay = document.querySelector('.camera-permission-error');
   const captureBtn = document.getElementById('capture-btn');
+  const switchBtn  = document.getElementById('switch-camera-btn');
   const retakeBtn  = document.getElementById('retake-btn');
   const nextBtn    = document.getElementById('camera-next-btn');
+
+  let currentDeviceId = null;
+  let videoDevices = [];
   const stripContainer = document.getElementById('captured-strip');
   const photoCounter = document.getElementById('photo-counter');
 
@@ -43,13 +47,31 @@ const Camera = (() => {
       return;
     }
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+      const constraints = {
         audio: false,
-      });
+        video: currentDeviceId 
+          ? { deviceId: { exact: currentDeviceId }, width: { ideal: 1280 }, height: { ideal: 960 } } 
+          : { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }
+      };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
       video.srcObject = stream;
       await video.play();
       applySettings();
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      videoDevices = devices.filter(d => d.kind === 'videoinput');
+      
+      if (videoDevices.length > 1 && switchBtn) {
+          switchBtn.style.display = 'flex';
+      } else if (switchBtn) {
+          switchBtn.style.display = 'none';
+      }
+
+      if (!currentDeviceId && videoDevices.length > 0) {
+          const track = stream.getVideoTracks()[0];
+          const currentDevice = videoDevices.find(d => d.label === track.label);
+          if (currentDevice) currentDeviceId = currentDevice.deviceId;
+      }
     } catch (err) {
       const msgs = {
         NotAllowedError:  '🚫 Akses kamera ditolak. Izinkan kamera di pengaturan browser kamu ya.',
@@ -91,7 +113,7 @@ const Camera = (() => {
     btn.addEventListener('click', () => {
       delayBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      captureDelay = parseInt(btn.dataset.val, 10);
+      captureDelay = parseInt(btn.dataset.delay, 10);
     });
   });
 
@@ -366,6 +388,14 @@ const Camera = (() => {
 
   // ── Event Listeners ──────────────────────────────────────
   captureBtn?.addEventListener('click', () => triggerCapture());
+  switchBtn?.addEventListener('click', async () => {
+    if (videoDevices.length < 2) return;
+    const currentIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
+    const nextIndex = (currentIndex + 1) % videoDevices.length;
+    currentDeviceId = videoDevices[nextIndex].deviceId;
+    stop();
+    await start();
+  });
   retakeBtn?.addEventListener('click', () => {
     // Retake all
     capturedPhotos.fill(null);
