@@ -90,7 +90,7 @@ try {
     // Kredensial SMTP
     $smtpHost = env('SMTP_HOST', 'smtp.gmail.com');
     $smtpPort = env('SMTP_PORT', 465);
-    $smtpUser = env('SMTP_USERNAME', 'emailmu@gmail.com');
+    $smtpUser = env('SMTP_USERNAME', 'januarvino79@gmail.com');
     $smtpPass = env('SMTP_PASSWORD', 'cmnretbsstyikbfr'); // App password dari user
     $smtpName = env('SMTP_FROM_NAME', 'Photopedia');
 
