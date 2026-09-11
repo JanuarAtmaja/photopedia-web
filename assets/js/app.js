@@ -447,10 +447,9 @@ const App = (() => {
       navigate('landing');
     });
     
-    // Gallery Navigation
-    const goGallery = () => { navigate('gallery'); initGallery(); };
-    document.getElementById('nav-gallery-btn')?.addEventListener('click', goGallery);
-    document.getElementById('landing-gallery-btn')?.addEventListener('click', goGallery);
+    // Gallery Navigation — UI hidden, upload still works in background
+    // document.getElementById('nav-gallery-btn')?.addEventListener('click', goGallery);
+    // document.getElementById('landing-gallery-btn')?.addEventListener('click', goGallery);
     document.getElementById('back-to-landing-btn')?.addEventListener('click', () => navigate('landing'));
   }
 

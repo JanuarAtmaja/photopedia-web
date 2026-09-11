@@ -151,7 +151,7 @@ $jsConfig = json_encode([
     </nav>
     <!-- Additional Nav -->
       <div class="header-actions" style="margin-left:auto; display:flex; gap:12px;">
-        <button id="nav-gallery-btn" class="btn btn-ghost btn-sm" aria-label="Buka Gallery">Gallery</button>
+        <!-- Gallery button hidden -->
       </div>
     </div>
   </div>
@@ -190,9 +190,7 @@ $jsConfig = json_encode([
           <button id="start-btn" class="btn btn-primary btn-lg" aria-label="Mulai buat foto">
             Mulai Foto Sekarang
           </button>
-          <button id="landing-gallery-btn" class="btn btn-surface btn-lg" aria-label="Lihat Gallery">
-            Lihat Gallery
-          </button>
+          <!-- Gallery button hidden -->
           <a href="#cara-pakai" class="btn btn-ghost btn-lg">Cara Pakai →</a>
         </div>
 
@@ -615,28 +613,8 @@ $jsConfig = json_encode([
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════════
-       PAGE 6: GALLERY
-    ════════════════════════════════════════════════ -->
-  <section id="page-gallery" class="page-section" aria-label="Halaman galeri foto">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Galeri Photopedia</h2>
-        <p class="section-sub">Koleksi foto keren dari pengguna Photopedia</p>
-      </div>
-      <div class="gallery-grid" id="gallery-container">
-        <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">
-          <div class="spinner" style="margin:0 auto 12px;"></div>
-          <p>Memuat galeri…</p>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:40px;">
-        <button id="back-to-landing-btn" class="btn btn-surface btn-lg" aria-label="Kembali ke beranda">
-          ← Kembali ke Beranda
-        </button>
-      </div>
-    </div>
-  </section>
+  <!-- PAGE 6: GALLERY — hidden, upload still works in background -->
+  <section id="page-gallery" class="page-section" aria-label="Halaman galeri foto" style="display:none !important;"></section>
 
 </main>
 
