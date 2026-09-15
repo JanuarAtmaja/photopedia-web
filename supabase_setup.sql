@@ -3,6 +3,10 @@
 --  Jalankan di: Supabase Dashboard > SQL Editor
 -- ============================================================
 
+-- ============================================================
+--  TABEL: photos
+-- ============================================================
+
 -- 1. Buat tabel photos
 CREATE TABLE IF NOT EXISTS public.photos (
     id          UUID         DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -28,3 +32,49 @@ CREATE POLICY "Public can read photos"
 --     ON public.photos
 --     FOR INSERT
 --     WITH CHECK (true);
+
+-- ============================================================
+--  TABEL: frames
+--  Menyimpan metadata frame beserta data slot (posisi foto)
+--  secara dinamis tanpa perlu hardcode di kode PHP.
+-- ============================================================
+
+-- 5. Buat tabel frames
+CREATE TABLE IF NOT EXISTS public.frames (
+    id          TEXT         PRIMARY KEY,              -- slug, e.g. "film-strip"
+    label       TEXT         NOT NULL,                 -- "Film Strip"
+    filename    TEXT         NOT NULL,                 -- "frame-film-strip.png"
+    slots       JSONB        NOT NULL DEFAULT '[]',    -- [{x, y, width, height}, ...]
+    width       INTEGER      DEFAULT 1080,
+    height      INTEGER      DEFAULT 1920,
+    is_active   BOOLEAN      DEFAULT true,
+    sort_order  INTEGER      DEFAULT 0,
+    created_at  TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ  DEFAULT NOW()
+);
+
+-- 6. Enable RLS untuk tabel frames
+ALTER TABLE public.frames ENABLE ROW LEVEL SECURITY;
+
+-- 7. Policy: semua orang boleh READ frame yang aktif
+CREATE POLICY "Public can read active frames"
+    ON public.frames
+    FOR SELECT
+    USING (is_active = true);
+
+-- 8. Trigger: auto-update kolom updated_at saat row diupdate
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER frames_updated_at
+    BEFORE UPDATE ON public.frames
+    FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- 9. Index untuk query umum
+CREATE INDEX IF NOT EXISTS idx_frames_is_active    ON public.frames (is_active);
+CREATE INDEX IF NOT EXISTS idx_frames_sort_order   ON public.frames (sort_order, label);
