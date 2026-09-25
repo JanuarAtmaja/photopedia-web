@@ -84,7 +84,7 @@ $jsConfig = json_encode([
   <link rel="manifest" href="/site.webmanifest">
 
   <!-- App Styles -->
-  <link rel="stylesheet" href="/assets/css/style.css?v=34">
+  <link rel="stylesheet" href="/assets/css/style.css?v=50">
 
   <!-- Config untuk JS (hanya anon key, AMAN untuk expose ke client) -->
   <script>
@@ -174,7 +174,7 @@ $jsConfig = json_encode([
   <section id="page-landing" class="page-section active" aria-label="Halaman utama">
     <div class="container">
       <div class="landing-hero">
-        <div class="hero-badge">Photobooth Digital Gen-Z</div>
+        <div class="hero-badge">✦ Photobooth Digital Gen-Z</div>
 
         <h1 class="hero-title">
           Abadikan Momen<br>
@@ -188,26 +188,55 @@ $jsConfig = json_encode([
 
         <div class="hero-cta">
           <button id="start-btn" class="btn btn-primary btn-lg" aria-label="Mulai buat foto">
-            Mulai Foto Sekarang
+            ✦ Mulai Foto Sekarang
           </button>
           <!-- Gallery button hidden -->
           <a href="#cara-pakai" class="btn btn-ghost btn-lg">Cara Pakai →</a>
         </div>
 
         <div class="feature-pills" role="list" aria-label="Fitur utama">
-          <div class="pill" role="listitem">Filter Instagram</div>
-          <div class="pill" role="listitem">Bingkai Keren</div>
-          <div class="pill" role="listitem">Stiker & Teks</div>
-          <div class="pill" role="listitem">Kirim via Email</div>
-          <div class="pill" role="listitem">Share Link</div>
+          <div class="pill" role="listitem">🎨 Filter Instagram</div>
+          <div class="pill" role="listitem">🖼 Bingkai Keren</div>
+          <div class="pill" role="listitem">✨ Stiker &amp; Teks</div>
+          <div class="pill" role="listitem">📧 Kirim via Email</div>
+          <div class="pill" role="listitem">🔗 Share Link</div>
         </div>
 
-        <!-- Hero Mockup -->
+        <!-- Hero Mockup — Geometric Collage Card -->
         <div class="hero-mockup" aria-hidden="true">
+          <!-- Floating geometric shapes -->
+          <div class="mockup-shape-1" aria-hidden="true"></div>
+          <div class="mockup-shape-2" aria-hidden="true"></div>
           <div class="mockup-inner">
             <div class="mockup-screen">
+              <!-- SVG collage inside screen -->
+              <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 720 405" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <!-- Background -->
+                <rect width="720" height="405" fill="#0F1B3D"/>
+                <!-- Big magenta circle -->
+                <circle cx="180" cy="120" r="140" fill="#FF2D78" opacity="0.85"/>
+                <!-- Orange rectangle -->
+                <rect x="300" y="30" width="200" height="160" rx="16" fill="#FF6B2B" opacity="0.9"/>
+                <!-- Lime triangle -->
+                <polygon points="520,20 660,20 590,160" fill="#D4F04A" opacity="0.9"/>
+                <!-- Gold square overlay -->
+                <rect x="220" y="120" width="150" height="150" rx="12" fill="#F4C430" opacity="0.85"/>
+                <!-- Navy square focal -->
+                <rect x="290" y="140" width="140" height="130" rx="18" fill="#0F1B3D"/>
+                <!-- Camera icon -->
+                <g transform="translate(360,205)">
+                  <path d="M-34,-20 a4,4 0 0 1 4,-4 h60 a4,4 0 0 1 4,4 v36 a4,4 0 0 1 -4,4 h-60 a4,4 0 0 1 -4,-4 z" fill="none" stroke="white" stroke-width="3"/>
+                  <circle cx="0" cy="9" r="12" fill="none" stroke="white" stroke-width="3"/>
+                  <path d="M-8,-18 l4,-6 h8 l4,6" fill="none" stroke="white" stroke-width="2"/>
+                </g>
+                <!-- Mint circle bottom right -->
+                <circle cx="600" cy="340" r="80" fill="#7FFFD4" opacity="0.7"/>
+                <!-- Maroon block -->
+                <rect x="0" y="280" width="200" height="125" fill="#7B1E1E" opacity="0.75"/>
+                <!-- Lavender star accent -->
+                <polygon points="650,80 660,100 680,100 665,115 672,137 650,124 628,137 635,115 620,100 640,100" fill="#C4B5FD" opacity="0.9"/>
+              </svg>
               <div class="mockup-pulse"></div>
-              <span class="mockup-camera-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
             </div>
           </div>
         </div>
@@ -219,22 +248,30 @@ $jsConfig = json_encode([
           <h2 class="section-title">Cara Pakai</h2>
           <p class="section-sub">Cuma 4 langkah mudah!</p>
         </div>
+        <?php
+        $steps = [
+            ['01', 'Pilih Bingkai', 'Pilih template frame favoritmu', '#D4F04A', '🖼'],
+            ['02', 'Ambil Foto',    'Foto dengan kamera langsung dari browser', '#FFD6B0', '📸'],
+            ['03', 'Edit &amp; Filter', 'Tambah filter, stiker, dan teks', '#7FFFD4', '✨'],
+            ['04', 'Bagikan',       'Download, share link, atau kirim via email', '#C4B5FD', '🚀'],
+        ];
+        ?>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;">
-          <?php
-          $steps = [
-              ['01', 'Pilih Bingkai', 'Pilih template frame favoritmu'],
-              ['02', 'Ambil Foto',    'Foto dengan kamera langsung dari browser'],
-              ['03', 'Edit & Filter', 'Tambah filter, stiker, dan teks'],
-              ['04', 'Bagikan',       'Download, share link, atau kirim via email'],
-          ];
-          foreach ($steps as $i => [$icon, $title, $desc]): ?>
-          <div class="card" style="padding:24px;text-align:center;">
-            <div style="font-size:36px;margin-bottom:12px;"><?= $icon ?></div>
-            <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px;">
-              LANGKAH <?= $i + 1 ?>
+          <?php foreach ($steps as $i => [$icon, $title, $desc, $color, $emoji]): ?>
+          <div class="card" style="padding:0;text-align:center;overflow:hidden;">
+            <!-- Geometric thumbnail -->
+            <div style="background:<?= $color ?>;height:100px;position:relative;display:flex;align-items:center;justify-content:center;border-bottom:2.5px solid var(--navy);">
+              <!-- decorative shapes -->
+              <div style="position:absolute;top:-20px;left:-20px;width:80px;height:80px;background:var(--navy);opacity:0.15;border-radius:50%;"></div>
+              <div style="position:absolute;bottom:-10px;right:-10px;width:60px;height:60px;background:var(--navy);opacity:0.12;clip-path:polygon(50% 0%, 0% 100%, 100% 100%);"></div>
+              <span style="font-size:42px;position:relative;z-index:1;"><?= $emoji ?></span>
+              <span style="position:absolute;top:8px;left:12px;font-size:10px;font-weight:900;color:var(--navy);opacity:0.5;font-family:'Space Grotesk',sans-serif;letter-spacing:1px;"><?= $icon ?></span>
             </div>
-            <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;"><?= $title ?></h3>
-            <p style="font-size:13px;color:var(--text-muted);"><?= $desc ?></p>
+            <div style="padding:16px 20px;">
+              <div style="font-size:10px;font-weight:900;color:var(--navy);margin-bottom:4px;letter-spacing:1.5px;font-family:'Space Grotesk',sans-serif;">LANGKAH <?= $i + 1 ?></div>
+              <h3 style="font-size:16px;font-weight:900;margin-bottom:6px;color:var(--navy);font-family:'Space Grotesk',sans-serif;"><?= $title ?></h3>
+              <p style="font-size:13px;color:var(--text-muted);font-weight:500;"><?= $desc ?></p>
+            </div>
           </div>
           <?php endforeach; ?>
         </div>
@@ -641,9 +678,9 @@ $jsConfig = json_encode([
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App modules -->
-<script src="/assets/js/camera.js?v=35"></script>
-<script src="/assets/js/editor.js?v=35"></script>
-<script src="/assets/js/app.js?v=35"></script>
+<script src="/assets/js/camera.js?v=50"></script>
+<script src="/assets/js/editor.js?v=50"></script>
+<script src="/assets/js/app.js?v=50"></script>
 
 </body>
 </html>
