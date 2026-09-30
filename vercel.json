@@ -86,7 +86,7 @@
   "crons": [
     {
       "path": "/api/cleanup-rejected",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "env": {
