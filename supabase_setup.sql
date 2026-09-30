@@ -78,3 +78,35 @@ CREATE TRIGGER frames_updated_at
 -- 9. Index untuk query umum
 CREATE INDEX IF NOT EXISTS idx_frames_is_active    ON public.frames (is_active);
 CREATE INDEX IF NOT EXISTS idx_frames_sort_order   ON public.frames (sort_order, label);
+
+-- ============================================================
+--  TABEL: frame_submissions
+--  Menyimpan antrean submission frame dari user
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.frame_submissions (
+    id                UUID         DEFAULT gen_random_uuid() PRIMARY KEY,
+    frame_title       TEXT         NOT NULL,
+    filename          TEXT         NOT NULL,
+    submitter_email   TEXT         NOT NULL,
+    submitter_name    TEXT         NOT NULL,
+    strip_type        TEXT         NOT NULL,
+    slots             JSONB        NOT NULL DEFAULT '[]',
+    width             INTEGER      DEFAULT 1080,
+    height            INTEGER      DEFAULT 1920,
+    status            TEXT         DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    rejection_reason  TEXT,
+    submitted_at      TIMESTAMPTZ  DEFAULT NOW(),
+    reviewed_at       TIMESTAMPTZ
+);
+
+-- Enable RLS
+ALTER TABLE public.frame_submissions ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Publik hanya bisa insert (submit)
+CREATE POLICY "Public can insert frame_submissions"
+    ON public.frame_submissions
+    FOR INSERT
+    WITH CHECK (true);
+
+-- Policy: Hanya service_role yang bisa SELECT/UPDATE (via API admin)
+-- (service_role bypasses RLS automatically)

@@ -67,8 +67,26 @@
       "dest": "/api/admin/frames.php"
     },
     {
+      "src": "/api/cleanup-rejected(.php)?",
+      "dest": "/api/cleanup-rejected.php"
+    },
+    {
+      "src": "/admin/review",
+      "dest": "/api/admin/review.php"
+    },
+    {
+      "src": "/admin",
+      "dest": "/api/admin/dashboard.php"
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/index.php"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cleanup-rejected",
+      "schedule": "0 * * * *"
     }
   ],
   "env": {
