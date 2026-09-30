@@ -659,14 +659,16 @@ button { cursor: pointer; font-family: var(--font); }
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
-  pointer-events: none; /* so container doesn't block clicks around it */
+  z-index: 9999;
+  width: max-content;
+  display: flex;
+  justify-content: center;
 }
 
 .floating-next-btn-container button {
-  pointer-events: auto;
-  box-shadow: 0 12px 32px rgba(15, 27, 61, 0.3);
-  border-radius: 50px;
+  box-shadow: 0 12px 32px rgba(15, 27, 61, 0.4) !important;
+  border-radius: 50px !important;
+  padding: 16px 48px !important;
 }
 
 /* ── ═══════════════════════════════════════════════════════
