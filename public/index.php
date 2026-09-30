@@ -310,9 +310,10 @@ $jsConfig = json_encode([
         </div>
       </div>
 
-      <div class="floating-next-btn-container">
+      <div class="floating-next-btn-container" style="position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 9999; width: max-content; display: flex; justify-content: center; pointer-events: none;">
         <button id="frame-next-btn" class="btn btn-primary btn-lg" disabled
-                aria-label="Lanjut ke halaman kamera">
+                aria-label="Lanjut ke halaman kamera"
+                style="box-shadow: 0 12px 32px rgba(15, 27, 61, 0.5) !important; border-radius: 50px !important; padding: 16px 48px !important; pointer-events: auto;">
           Lanjut ke Kamera →
         </button>
       </div>
