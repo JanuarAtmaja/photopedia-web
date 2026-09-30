@@ -90,7 +90,7 @@ function get_frames(): array
         return [];
     }
 
-    $publicBase = '/assets/frames';
+    $publicBase = 'https://jkcrgurzbcvlwsyrmits.supabase.co/storage/v1/object/public/frames';
     $frames     = [];
 
     foreach ($rows as $row) {
