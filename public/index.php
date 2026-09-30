@@ -84,7 +84,7 @@ $jsConfig = json_encode([
   <link rel="manifest" href="/site.webmanifest">
 
   <!-- App Styles -->
-  <link rel="stylesheet" href="/assets/css/style.css?v=51">
+  <link rel="stylesheet" href="/assets/css/style.css?v=52">
 
   <!-- Config untuk JS (hanya anon key, AMAN untuk expose ke client) -->
   <script>
@@ -310,13 +310,7 @@ $jsConfig = json_encode([
         </div>
       </div>
 
-      <div class="floating-next-btn-container" style="position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 9999; width: max-content; display: flex; justify-content: center; pointer-events: none;">
-        <button id="frame-next-btn" class="btn btn-primary btn-lg" disabled
-                aria-label="Lanjut ke halaman kamera"
-                style="box-shadow: 0 12px 32px rgba(15, 27, 61, 0.5) !important; border-radius: 50px !important; padding: 16px 48px !important; pointer-events: auto;">
-          Lanjut ke Kamera →
-        </button>
-      </div>
+
     </div>
   </section>
 
@@ -656,6 +650,15 @@ $jsConfig = json_encode([
 
 </main>
 
+<!-- Floating Frame Next Button (outside page-section so position:fixed always works) -->
+<div id="frame-next-container" style="display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); z-index:9999; pointer-events:none;">
+  <button id="frame-next-btn" class="btn btn-primary btn-lg" disabled
+          aria-label="Lanjut ke halaman kamera"
+          style="border-radius:50px; padding:16px 48px; pointer-events:auto; box-shadow:0 8px 32px rgba(15,27,61,0.45)">
+    Lanjut ke Kamera →
+  </button>
+</div>
+
 <!-- Lightbox Modal -->
 <div id="lightbox-modal" class="lightbox-modal" style="display:none;">
   <button class="lightbox-close" aria-label="Tutup preview">&times;</button>
@@ -679,9 +682,9 @@ $jsConfig = json_encode([
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- App modules -->
-<script src="/assets/js/camera.js?v=50"></script>
-<script src="/assets/js/editor.js?v=50"></script>
-<script src="/assets/js/app.js?v=50"></script>
+<script src="/assets/js/camera.js?v=52"></script>
+<script src="/assets/js/editor.js?v=52"></script>
+<script src="/assets/js/app.js?v=52"></script>
 
 </body>
 </html>

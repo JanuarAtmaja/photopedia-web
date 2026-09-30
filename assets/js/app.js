@@ -27,6 +27,12 @@ const App = (() => {
     updateProgressSteps(pageId);
     state.currentPage = pageId;
 
+    // Show/hide floating next button (only on frames page)
+    const floatContainer = document.getElementById('frame-next-container');
+    if (floatContainer) {
+      floatContainer.style.display = (pageId === 'frames') ? 'block' : 'none';
+    }
+
     // Lifecycle hooks
     if (pageId === 'camera' && state.selectedFrame) {
       Camera.start();
@@ -61,7 +67,8 @@ const App = (() => {
     document.querySelectorAll('.frame-card').forEach(c => {
       c.classList.toggle('selected', c.dataset.frameId === frame.id);
     });
-    document.getElementById('frame-next-btn')?.removeAttribute('disabled');
+    const btn = document.getElementById('frame-next-btn');
+    if (btn) btn.removeAttribute('disabled');
   }
 
   // ── Set current photo (from Camera) ───────────────────────
