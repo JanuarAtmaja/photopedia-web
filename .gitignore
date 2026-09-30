@@ -47,3 +47,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+instruksi.md
+User_Manual_Photopedia.docx
+supabase_setup.sql
