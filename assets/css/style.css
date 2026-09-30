@@ -654,6 +654,21 @@ button { cursor: pointer; font-family: var(--font); }
   font-weight: 600;
 }
 
+.floating-next-btn-container {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  pointer-events: none; /* so container doesn't block clicks around it */
+}
+
+.floating-next-btn-container button {
+  pointer-events: auto;
+  box-shadow: 0 12px 32px rgba(15, 27, 61, 0.3);
+  border-radius: 50px;
+}
+
 /* ── ═══════════════════════════════════════════════════════
    CAMERA PAGE
    ══════════════════════════════════════════════════════ */

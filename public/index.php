@@ -310,7 +310,7 @@ $jsConfig = json_encode([
         </div>
       </div>
 
-      <div style="text-align:center;margin-top:40px;">
+      <div class="floating-next-btn-container">
         <button id="frame-next-btn" class="btn btn-primary btn-lg" disabled
                 aria-label="Lanjut ke halaman kamera">
           Lanjut ke Kamera →
