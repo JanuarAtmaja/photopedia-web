@@ -95,26 +95,6 @@
       "dest": "/api/cleanup-rejected.php"
     },
     {
-      "src": "/submit-frame",
-      "dest": "/public/submit-frame.php"
-    },
-    {
-      "src": "/admin/login",
-      "dest": "/public/admin/login.php"
-    },
-    {
-      "src": "/admin/logout",
-      "dest": "/public/admin/logout.php"
-    },
-    {
-      "src": "/admin/review",
-      "dest": "/public/admin/review.php"
-    },
-    {
-      "src": "/admin",
-      "dest": "/public/admin/index.php"
-    },
-    {
       "src": "/robots.txt",
       "dest": "/public/robots.txt"
     },
