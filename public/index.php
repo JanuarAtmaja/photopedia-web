@@ -14,6 +14,53 @@ if ($uri === '/api/frames.php' || $uri === '/api/frames') {
     require_once dirname(__DIR__) . '/api/frames.php';
     exit;
 }
+if ($uri === '/api/submit-frame.php' || $uri === '/api/submit-frame') {
+    require_once dirname(__DIR__) . '/api/submit-frame.php';
+    exit;
+}
+if ($uri === '/api/admin/submissions.php' || $uri === '/api/admin/submissions') {
+    require_once dirname(__DIR__) . '/api/admin/submissions.php';
+    exit;
+}
+if ($uri === '/api/admin/approve.php' || $uri === '/api/admin/approve') {
+    require_once dirname(__DIR__) . '/api/admin/approve.php';
+    exit;
+}
+if ($uri === '/api/admin/reject.php' || $uri === '/api/admin/reject') {
+    require_once dirname(__DIR__) . '/api/admin/reject.php';
+    exit;
+}
+if ($uri === '/api/admin/frames.php' || $uri === '/api/admin/frames') {
+    require_once dirname(__DIR__) . '/api/admin/frames.php';
+    exit;
+}
+
+// ── Routing untuk halaman publik & admin ─────────────────────
+if ($uri === '/submit-frame' || $uri === '/submit-frame.php') {
+    require_once __DIR__ . '/submit-frame.php';
+    exit;
+}
+if ($uri === '/admin/login') {
+    require_once __DIR__ . '/admin/login.php';
+    exit;
+}
+if ($uri === '/admin/logout') {
+    require_once __DIR__ . '/admin/logout.php';
+    exit;
+}
+if ($uri === '/admin/review') {
+    require_once __DIR__ . '/admin/review.php';
+    exit;
+}
+if ($uri === '/admin' || $uri === '/admin/') {
+    require_once __DIR__ . '/admin/index.php';
+    exit;
+}
+if ($uri === '/robots.txt') {
+    header('Content-Type: text/plain');
+    readfile(__DIR__ . '/robots.txt');
+    exit;
+}
 
 // Handle static assets routing in Vercel environment
 $isAsset = strpos($uri, '/assets/') === 0;
@@ -151,7 +198,9 @@ $jsConfig = json_encode([
     </nav>
     <!-- Additional Nav -->
       <div class="header-actions" style="margin-left:auto; display:flex; gap:12px;">
-        <!-- Gallery button hidden -->
+        <a href="/submit-frame" class="btn btn-ghost" style="font-size: 14px; font-weight: 600; text-decoration: none; padding: 8px 16px; border-radius: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+          Kirim Frame 🎨
+        </a>
       </div>
     </div>
   </div>

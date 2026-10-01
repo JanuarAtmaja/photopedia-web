@@ -14,9 +14,19 @@ require_once dirname(__DIR__, 2) . '/lib/PHPMailer/SMTP.php';
 set_cors_headers();
 
 // ── Auth ─────────────────────────────────────────────────────
+require_once dirname(__DIR__, 2) . '/config/admin-auth.php';
+
 $adminSecret = env('ADMIN_SECRET');
 $provided    = $_SERVER['HTTP_X_ADMIN_SECRET'] ?? '';
-if (!$adminSecret || $provided !== $adminSecret) {
+
+// Cek via session PHP native
+admin_session_start();
+$sessionOk = !empty($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+
+// Cek via secret header (legacy API clients)
+$secretOk = $adminSecret && $provided === $adminSecret;
+
+if (!$sessionOk && !$secretOk) {
     respond_json(['error' => 'Unauthorized'], 401);
 }
 
