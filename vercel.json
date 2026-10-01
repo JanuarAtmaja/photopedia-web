@@ -145,12 +145,6 @@
       "dest": "/api/index.php"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/cleanup-rejected",
-      "schedule": "0 * * * *"
-    }
-  ],
   "env": {
     "APP_ENV": "production",
     "APP_DEBUG": "false"
