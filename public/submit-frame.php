@@ -860,7 +860,13 @@ require_once dirname(__DIR__) . '/config/helpers.php';
         compressStatus.className = 'compress-status';
         processedBlob = null;
       } else {
-        showResult('error', '❌ Gagal Mengirim', data.error || 'Terjadi kesalahan. Coba lagi.');
+        const detail = typeof data.detail === 'string'
+          ? data.detail
+          : data.detail?.message || data.detail?.details;
+        const message = [data.error || 'Terjadi kesalahan. Coba lagi.', detail]
+          .filter(Boolean)
+          .join(' ');
+        showResult('error', '❌ Gagal Mengirim', message);
       }
     } catch (err) {
       showResult('error', '❌ Koneksi Gagal', 'Tidak bisa terhubung ke server. Periksa koneksi internet kamu.');
@@ -874,10 +880,13 @@ require_once dirname(__DIR__) . '/config/helpers.php';
   function showResult(type, title, msg) {
     resultBox.className = type;
     resultBox.style.display = 'block';
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
     resultBox.innerHTML = `
       <div class="result-icon">${type === 'success' ? '✅' : '❌'}</div>
-      <h3>${title}</h3>
-      <p>${msg}</p>
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(msg)}</p>
       ${type === 'success' ? '<button class="btn-reset" onclick="location.reload()">Kirim Frame Lagi</button>' : ''}
     `;
     resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });

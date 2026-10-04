@@ -170,7 +170,35 @@ $dbCode     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($dbCode < 200 || $dbCode >= 300) {
-    respond_json(['error' => 'Gagal menyimpan data submission.', 'detail' => $dbResponse], 502);
+    error_log("[Photopedia] submit-frame database insert failed (HTTP $dbCode): $dbResponse");
+
+    $cleanupUrl = $supabaseUrl . '/storage/v1/object/submissions/' . rawurlencode($filename);
+    $cleanup = curl_init($cleanupUrl);
+    curl_setopt_array($cleanup, [
+        CURLOPT_CUSTOMREQUEST  => 'DELETE',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: Bearer ' . $serviceRoleKey,
+            'apikey: ' . $serviceRoleKey,
+        ],
+    ]);
+    $cleanupResponse = curl_exec($cleanup);
+    $cleanupCode     = curl_getinfo($cleanup, CURLINFO_HTTP_CODE);
+    $cleanupError    = curl_error($cleanup);
+    curl_close($cleanup);
+
+    if ($cleanupError || $cleanupCode < 200 || $cleanupCode >= 300) {
+        error_log("[Photopedia] submit-frame orphan cleanup failed (HTTP $cleanupCode): " . ($cleanupError ?: $cleanupResponse));
+    }
+
+    $dbError = json_decode($dbResponse, true);
+    respond_json([
+        'error' => 'Gagal menyimpan data submission. Jalankan migrasi fix_frame_submissions_schema.sql di Supabase SQL Editor.',
+        'detail' => is_array($dbError)
+            ? ($dbError['message'] ?? $dbError['details'] ?? $dbResponse)
+            : $dbResponse,
+    ], 502);
 }
 
 respond_json([
