@@ -8,17 +8,87 @@ require_once __DIR__ . '/helpers.php';
  */
 function admin_session_start(): void
 {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_set_cookie_params([
-            'lifetime' => 0,          // session cookie (hilang saat browser ditutup)
-            'path'     => '/',
-            'secure'   => (env('APP_ENV', 'production') === 'production'),
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-        session_name('photopedia_admin');
-        session_start();
+    static $started = false;
+    if ($started) return;
+
+    $_SESSION = [];
+    $cookie = $_COOKIE['photopedia_admin_auth'] ?? '';
+    $parts = is_string($cookie) ? explode('.', $cookie, 2) : [];
+    if (count($parts) !== 2) {
+        $started = true;
+        return;
     }
+
+    $secret = admin_session_secret();
+    if (!$secret || !hash_equals(hash_hmac('sha256', $parts[0], $secret), $parts[1])) {
+        $started = true;
+        return;
+    }
+
+    $encoded = strtr($parts[0], '-_', '+/');
+    $encoded .= str_repeat('=', (4 - strlen($encoded) % 4) % 4);
+    $json = base64_decode($encoded, true);
+    $data = $json === false ? null : json_decode($json, true);
+    $issuedAt = is_array($data) ? ($data['iat'] ?? null) : null;
+    $csrfToken = is_array($data) ? ($data['csrf'] ?? '') : '';
+
+    if (
+        !is_array($data) ||
+        !is_int($issuedAt) ||
+        $issuedAt > time() + 60 ||
+        time() - $issuedAt > 8 * 60 * 60 ||
+        !is_string($csrfToken) ||
+        strlen($csrfToken) !== 64
+    ) {
+        $started = true;
+        return;
+    }
+
+    $_SESSION = [
+        'csrf_token' => $csrfToken,
+        'admin_login_at' => $issuedAt,
+    ];
+    if (($data['authenticated'] ?? false) === true && !empty($data['username']) && is_string($data['username'])) {
+        $_SESSION['admin_logged_in'] = true;
+        $_SESSION['admin_username'] = $data['username'];
+    }
+
+    $started = true;
+}
+
+function admin_session_secret(): string
+{
+    return trim((string) (env('ADMIN_SESSION_SECRET') ?: env('SUPABASE_SERVICE_ROLE_KEY')));
+}
+
+function admin_save_cookie(bool $authenticated, string $username, string $csrfToken): void
+{
+    $secret = admin_session_secret();
+    if (!$secret) {
+        error_log('[Photopedia] Admin session signing key is not configured');
+        return;
+    }
+
+    $payload = json_encode([
+        'authenticated' => $authenticated,
+        'username' => $username,
+        'csrf' => $csrfToken,
+        'iat' => time(),
+    ]);
+    if ($payload === false) {
+        error_log('[Photopedia] Failed to encode admin session');
+        return;
+    }
+
+    $encoded = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+    $signature = hash_hmac('sha256', $encoded, $secret);
+    setcookie('photopedia_admin_auth', $encoded . '.' . $signature, [
+        'expires' => 0,
+        'path' => '/',
+        'secure' => (env('APP_ENV', 'production') === 'production'),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
 }
 
 /**
@@ -76,10 +146,11 @@ function admin_login(string $username, string $password): bool
 function admin_set_session(string $username): void
 {
     admin_session_start();
-    session_regenerate_id(true);
     $_SESSION['admin_logged_in'] = true;
     $_SESSION['admin_username']  = $username;
     $_SESSION['admin_login_at']  = time();
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    admin_save_cookie(true, $username, $_SESSION['csrf_token']);
 }
 
 /**
@@ -89,11 +160,16 @@ function admin_logout(): void
 {
     admin_session_start();
     $_SESSION = [];
-    if (ini_get('session.use_cookies')) {
-        $p = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
-    }
-    session_destroy();
+    $cookieOptions = [
+        'expires' => time() - 42000,
+        'path' => '/',
+        'secure' => (env('APP_ENV', 'production') === 'production'),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ];
+    setcookie('photopedia_admin_auth', '', $cookieOptions);
+    setcookie('photopedia_admin', '', $cookieOptions);
+    setcookie('photopedia_admin', '', array_replace($cookieOptions, ['path' => '/admin']));
 }
 
 /**
@@ -104,6 +180,11 @@ function csrf_token(): string
     admin_session_start();
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        admin_save_cookie(
+            !empty($_SESSION['admin_logged_in']),
+            $_SESSION['admin_username'] ?? '',
+            $_SESSION['csrf_token']
+        );
     }
     return $_SESSION['csrf_token'];
 }
@@ -123,4 +204,9 @@ function csrf_verify(): void
     }
     // Regenerate token setelah dipakai
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    admin_save_cookie(
+        !empty($_SESSION['admin_logged_in']),
+        $_SESSION['admin_username'] ?? '',
+        $_SESSION['csrf_token']
+    );
 }
