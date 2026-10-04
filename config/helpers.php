@@ -54,7 +54,7 @@ function get_frames(): array
 
     $endpoint = rtrim($supabaseUrl, '/')
         . '/rest/v1/frames'
-        . '?select=id,label,filename,slots,width,height,sort_order'
+        . '?select=id,label,filename,slots,width,height,sort_order,created_at'
         . '&is_active=eq.true'
         . '&order=sort_order.asc,label.asc';
 
@@ -116,6 +116,7 @@ function get_frames(): array
             'width'     => (int) ($row['width']  ?? 1080),
             'height'    => (int) ($row['height'] ?? 1920),
             'slots'     => $slots,
+            'created_at' => $row['created_at'] ?? null,
         ];
     }
 

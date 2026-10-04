@@ -218,7 +218,10 @@ const App = (() => {
     let filtered = allFrames.filter(f => f.label.toLowerCase().includes(searchVal));
     
     if (sortVal === 'newest') {
-      filtered.sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+      filtered.sort((a, b) => {
+        const dateDiff = Date.parse(b.created_at || '') - Date.parse(a.created_at || '');
+        return (Number.isNaN(dateDiff) ? 0 : dateDiff) || a.label.localeCompare(b.label);
+      });
     } else {
       // Default alpha
       filtered.sort((a, b) => a.label.localeCompare(b.label));
