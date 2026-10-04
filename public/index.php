@@ -734,7 +734,7 @@ $jsConfig = json_encode([
 <!-- App modules -->
 <script src="/assets/js/camera.js?v=52"></script>
 <script src="/assets/js/editor.js?v=52"></script>
-<script src="/assets/js/app.js?v=52"></script>
+<script src="/assets/js/app.js?v=53"></script>
 
 </body>
 </html>
