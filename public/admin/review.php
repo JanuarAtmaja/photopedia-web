@@ -73,7 +73,8 @@ function badge_review(string $s): string {
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=01ecc162">
+  <link rel="shortcut icon" href="/favicon.ico?v=eca0c5b8">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -215,7 +216,7 @@ function badge_review(string $s): string {
 <header class="admin-header">
   <div class="header-inner">
     <div class="header-brand">
-      <img src="/assets/images/Logo.png" alt="Photopedia">
+      <img src="/assets/images/Logo.png?v=a762fb34" alt="Photopedia">
       <span class="header-badge">Admin</span>
     </div>
     <a href="/admin" class="btn-back">← Dashboard</a>

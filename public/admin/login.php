@@ -43,7 +43,8 @@ $token = csrf_token();
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=01ecc162">
+  <link rel="shortcut icon" href="/favicon.ico?v=eca0c5b8">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -160,7 +161,7 @@ $token = csrf_token();
 <body>
 <div class="login-wrap">
   <div class="login-logo">
-    <img src="/assets/images/Logo.png" alt="Photopedia">
+    <img src="/assets/images/Logo.png?v=a762fb34" alt="Photopedia">
     <div class="login-badge">Admin Panel</div>
   </div>
 

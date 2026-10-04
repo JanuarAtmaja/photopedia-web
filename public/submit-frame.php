@@ -13,9 +13,10 @@ require_once dirname(__DIR__) . '/config/helpers.php';
   <meta name="robots" content="noindex">
 
   <!-- Favicon -->
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=de02adf9">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=01ecc162">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=76028c4b">
+  <link rel="shortcut icon" href="/favicon.ico?v=eca0c5b8">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -490,7 +491,7 @@ require_once dirname(__DIR__) . '/config/helpers.php';
 <header class="site-header">
   <div class="header-inner">
     <a href="/" class="logo-link">
-      <img src="/assets/images/Logo.png" alt="Photopedia">
+      <img src="/assets/images/Logo.png?v=a762fb34" alt="Photopedia">
     </a>
     <a href="/" class="back-btn">← Kembali</a>
   </div>

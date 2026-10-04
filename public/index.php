@@ -125,10 +125,11 @@ $jsConfig = json_encode([
   <meta property="og:image" content="<?= htmlspecialchars(env('APP_URL', '')) ?>/assets/frames/frame-film-strip.png">
 
   <!-- Favicon -->
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="manifest" href="/site.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=de02adf9">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=01ecc162">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=76028c4b">
+  <link rel="shortcut icon" href="/favicon.ico?v=eca0c5b8">
+  <link rel="manifest" href="/site.webmanifest?v=20261004">
 
   <!-- App Styles -->
   <link rel="stylesheet" href="/assets/css/style.css?v=52">
@@ -168,7 +169,7 @@ $jsConfig = json_encode([
   <div class="container header-inner">
     <!-- Logo -->
     <a href="/" class="logo" aria-label="Photopedia Beranda">
-      <div aria-hidden="true" style="display: flex; align-items: center;"><img src="/assets/images/Logo.png" alt="Logo" style="height: 32px; object-fit: contain;"></div>
+      <div aria-hidden="true" style="display: flex; align-items: center;"><img src="/assets/images/Logo.png?v=a762fb34" alt="Logo" style="height: 32px; object-fit: contain;"></div>
     </a>
 
     <!-- Progress Steps -->
