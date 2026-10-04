@@ -155,7 +155,10 @@ const App = (() => {
       }),
     });
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error ?? 'Gagal kirim email');
+    if (!resp.ok) {
+      const message = data.error ?? 'Gagal kirim email';
+      throw new Error(data.detail ? `${message}: ${data.detail}` : message);
+    }
     return data;
   }
 
@@ -334,7 +337,8 @@ const App = (() => {
             if (resData.success || resp.ok) {
               showToast('✅ Email berhasil dikirim', 'success');
             } else {
-              showToast('❌ Gagal: ' + (resData.error || 'Unknown error'), 'error');
+              const message = resData.error || 'Unknown error';
+              showToast('❌ Gagal: ' + (resData.detail ? `${message}: ${resData.detail}` : message), 'error');
             }
           } catch (err) {
             showToast('❌ Terjadi kesalahan pengiriman', 'error');
