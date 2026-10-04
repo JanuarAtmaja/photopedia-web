@@ -30,6 +30,14 @@ if (!$sessionOk && !$secretOk) {
     respond_json(['error' => 'Unauthorized'], 401);
 }
 
+if ($sessionOk && !$secretOk) {
+    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    $storedToken = $_SESSION['csrf_token'] ?? '';
+    if (!$csrfToken || !$storedToken || !hash_equals($storedToken, $csrfToken)) {
+        respond_json(['error' => 'Token CSRF tidak valid. Muat ulang halaman admin dan coba lagi.'], 403);
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond_json(['error' => 'Method not allowed'], 405);
 }

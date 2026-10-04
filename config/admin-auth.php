@@ -11,7 +11,7 @@ function admin_session_start(): void
     if (session_status() === PHP_SESSION_NONE) {
         session_set_cookie_params([
             'lifetime' => 0,          // session cookie (hilang saat browser ditutup)
-            'path'     => '/admin',
+            'path'     => '/',
             'secure'   => (env('APP_ENV', 'production') === 'production'),
             'httponly' => true,
             'samesite' => 'Lax',

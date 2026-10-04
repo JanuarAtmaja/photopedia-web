@@ -328,6 +328,7 @@ function badge_review(string $s): string {
 
 <script>
 const SUB_ID = <?= json_encode($id) ?>;
+const CSRF_TOKEN = <?= json_encode($token) ?>;
 
 function showToast(type, msg) {
   const t = document.getElementById('toast');
@@ -355,12 +356,10 @@ async function doApprove() {
     btn.textContent = `⏳ Memproses ${slots.length} slot…`;
     const res  = await fetch('/api/admin/approve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': '' /* dihandle session */ },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
       body: JSON.stringify({ id: SUB_ID, slots })
     });
 
-    // Coba dengan CSRF dulu, fallback ke X-Admin-Secret
-    // Untuk kompatibilitas: kirim via form POST jika perlu
     const data = await res.json();
 
     if (data.success) {
@@ -504,7 +503,7 @@ async function doReject() {
   try {
     const res  = await fetch('/api/admin/reject', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': '' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
       body: JSON.stringify({ id: SUB_ID, reason })
     });
     const data = await res.json();
