@@ -1,15 +1,9 @@
 <?php
-// api/send-email.php — Endpoint kirim email via SMTP PHPMailer
+// api/send-email.php — Endpoint kirim foto via Resend
 // POST /api/send-email
 // Body: { "to": "user@email.com", "photo_url": "https://...", "session_id": "...", "name": "Budi" }
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
 require_once dirname(__DIR__) . '/config/helpers.php';
-require_once dirname(__DIR__) . '/lib/PHPMailer/Exception.php';
-require_once dirname(__DIR__) . '/lib/PHPMailer/PHPMailer.php';
-require_once dirname(__DIR__) . '/lib/PHPMailer/SMTP.php';
 
 set_cors_headers();
 
@@ -23,18 +17,46 @@ rate_limit('email_' . $ip, 5, 60);
 
 $body = get_json_body();
 
-$to        = sanitize($body['to'] ?? '');
-$photoUrl  = sanitize($body['photo_url'] ?? '');
-$sessionId = sanitize($body['session_id'] ?? '');
-$name      = sanitize($body['name'] ?? 'Pengguna');
+$to       = trim((string) ($body['to'] ?? ''));
+$photoUrl = trim((string) ($body['photo_url'] ?? ''));
+$name     = trim((string) ($body['name'] ?? 'Pengguna'));
 
 // Validasi
 if (!$to || !is_valid_email($to)) {
     respond_json(['error' => 'Email tidak valid'], 422);
 }
-if (!$photoUrl) {
+if (!$photoUrl || filter_var($photoUrl, FILTER_VALIDATE_URL) === false) {
     respond_json(['error' => 'URL foto tidak ditemukan'], 422);
 }
+
+$photoParts = parse_url($photoUrl);
+$supabaseHost = parse_url((string) env('SUPABASE_URL'), PHP_URL_HOST);
+if (
+    !is_array($photoParts) ||
+    strtolower($photoParts['scheme'] ?? '') !== 'https' ||
+    empty($photoParts['host']) ||
+    !$supabaseHost ||
+    strtolower($photoParts['host']) !== strtolower($supabaseHost) ||
+    isset($photoParts['user']) ||
+    isset($photoParts['pass']) ||
+    (isset($photoParts['port']) && $photoParts['port'] !== 443)
+) {
+    respond_json(['error' => 'URL foto tidak valid atau bukan berasal dari storage Photopedia.'], 422);
+}
+
+$resendApiKey = trim((string) env('RESEND_API_KEY'));
+$resendFrom = trim((string) env('RESEND_FROM'));
+if (!$resendApiKey || !$resendFrom) {
+    respond_json([
+        'error' => 'Konfigurasi email belum lengkap. Atur RESEND_API_KEY dan RESEND_FROM.',
+    ], 500);
+}
+
+$safeName = htmlspecialchars($name ?: 'Pengguna', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$safePhotoUrl = htmlspecialchars($photoUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$extension = strtolower(pathinfo($photoParts['path'] ?? '', PATHINFO_EXTENSION));
+$extension = in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true) ? $extension : 'jpg';
+$attachmentFilename = 'photopedia-photo.' . $extension;
 
 // Bangun HTML email
 $emailHtml = <<<HTML
@@ -50,21 +72,21 @@ $emailHtml = <<<HTML
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#4B3FA0 0%,#6B5FD0 100%);padding:40px 32px;text-align:center;">
       <h1 style="color:#ffffff;font-size:28px;margin:0;font-weight:700;letter-spacing:-0.5px;">📸 Photopedia</h1>
-      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:15px;">Foto kamu sudah siap, {$name}!</p>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:15px;">Foto kamu sudah siap, {$safeName}!</p>
     </div>
     <!-- Body -->
     <div style="padding:40px 32px;">
       <p style="color:#1E1B4B;font-size:16px;line-height:1.6;margin:0 0 24px;">
-        Hei <strong>{$name}</strong>! 🎉<br><br>
+        Hei <strong>{$safeName}</strong>! 🎉<br><br>
         Terima kasih sudah pakai <strong>Photopedia</strong>. Foto kamu sudah siap diunduh!
       </p>
       <!-- Foto Preview -->
       <div style="text-align:center;margin-bottom:32px;">
-        <img src="{$photoUrl}" alt="Foto Photopedia" style="max-width:100%;border-radius:12px;border:3px solid #EDE8F5;box-shadow:0 4px 16px rgba(75,63,160,0.15);" />
+        <img src="{$safePhotoUrl}" alt="Foto Photopedia" style="max-width:100%;border-radius:12px;border:3px solid #EDE8F5;box-shadow:0 4px 16px rgba(75,63,160,0.15);" />
       </div>
       <!-- CTA Button -->
       <div style="text-align:center;margin-bottom:32px;">
-        <a href="{$photoUrl}" target="_blank" 
+        <a href="{$safePhotoUrl}" target="_blank"
            style="display:inline-block;background:linear-gradient(135deg,#4B3FA0,#6B5FD0);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-weight:600;font-size:15px;letter-spacing:0.3px;">
           ⬇️ Unduh Foto HD
         </a>
@@ -83,61 +105,58 @@ $emailHtml = <<<HTML
 </html>
 HTML;
 
-// Kirim via SMTP PHPMailer
-$mail = new PHPMailer(true);
+$payload = json_encode([
+    'from' => $resendFrom,
+    'to' => [$to],
+    'subject' => 'Photopedia - Foto kamu sudah siap!',
+    'html' => $emailHtml,
+    'text' => "Hai " . ($name ?: 'Pengguna') . "! Foto Photopedia kamu sudah siap. Unduh foto HD: " . $photoUrl,
+    'attachments' => [[
+        'path' => $photoUrl,
+        'filename' => $attachmentFilename,
+    ]],
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-try {
-    // Kredensial SMTP
-    $smtpHost = env('SMTP_HOST', 'smtp.gmail.com');
-    $smtpPort = env('SMTP_PORT', 465);
-    $smtpUser = env('SMTP_USERNAME', 'januarvino79@gmail.com');
-    $smtpPass = env('SMTP_PASSWORD', 'cmnretbsstyikbfr'); // App password dari user
-    $smtpName = env('SMTP_FROM_NAME', 'Photopedia');
+if ($payload === false) {
+    respond_json(['error' => 'Gagal menyiapkan email.'], 500);
+}
 
-    // Server settings
-    $mail->isSMTP();
-    $mail->Host       = $smtpHost;
-    $mail->SMTPAuth   = true;
-    $mail->Username   = $smtpUser;
-    $mail->Password   = $smtpPass;
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // SSL
-    if ($smtpPort == 587) {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS
-    }
-    $mail->Port       = $smtpPort;
+$ch = curl_init('https://api.resend.com/emails');
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => $payload,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $resendApiKey,
+        'Content-Type: application/json',
+        'Accept: application/json',
+    ],
+]);
 
-    // Tambahkan opsi ini agar lolos dari masalah sertifikat SSL (opsional, berguna di server lokal)
-    $mail->SMTPOptions = array(
-        'ssl' => array(
-            'verify_peer' => false,
-            'verify_peer_name' => false,
-            'allow_self_signed' => true
-        )
-    );
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
+curl_close($ch);
 
-    // Penerima
-    $mail->setFrom($smtpUser, $smtpName);
-    $mail->addAddress($to, $name);
+if ($response === false) {
+    error_log('[Photopedia] Resend request failed: ' . $curlError);
+    respond_json(['error' => 'Gagal menghubungi layanan email. Silakan coba lagi.'], 502);
+}
 
-    // Konten
-    $mail->CharSet  = 'UTF-8';
-    $mail->isHTML(true);
-    $mail->Subject = 'Photopedia - Your Photo is Ready!';
-    $mail->Body    = $emailHtml;
-    $mail->AltBody = "Hei {$name}! Foto kamu sudah siap diunduh. Silakan buka link berikut: {$photoUrl}";
-
-    // Attach foto HD langsung dari ImgBB
-    $imageData = @file_get_contents($photoUrl);
-    if ($imageData !== false) {
-        $mail->addStringAttachment($imageData, 'photopedia-photo.jpg', 'base64', 'image/jpeg');
-    }
-
-    $mail->send();
-    respond_json(['success' => true, 'message' => 'Email sent via SMTP']);
-} catch (Exception $e) {
-    error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
+$responseData = json_decode($response, true);
+if ($httpCode < 200 || $httpCode >= 300) {
+    error_log("[Photopedia] Resend returned HTTP $httpCode: $response");
     respond_json([
-        'error'   => 'Gagal mengirim email via SMTP',
-        'detail'  => $mail->ErrorInfo
+        'error' => 'Resend gagal mengirim email.',
+        'detail' => is_array($responseData)
+            ? ($responseData['message'] ?? $responseData['name'] ?? 'Periksa konfigurasi Resend.')
+            : 'Periksa konfigurasi Resend.',
     ], 502);
 }
+
+respond_json([
+    'success' => true,
+    'message' => 'Email foto berhasil dikirim via Resend.',
+    'email_id' => is_array($responseData) ? ($responseData['id'] ?? null) : null,
+]);
