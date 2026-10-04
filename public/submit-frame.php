@@ -585,7 +585,7 @@ require_once dirname(__DIR__) . '/config/helpers.php';
         <div class="guidelines">
           <h3>📋 Panduan Desain</h3>
           <ul>
-            <li>Format file: PNG atau JPG saja</li>
+            <li>Format file: PNG dengan transparansi pada setiap area foto</li>
             <li>Ukuran file maksimal 1.5 MB</li>
             <li>Resolusi ideal 300 DPI sesuai tipe strip</li>
             <li>Area foto (slot) harus transparan (PNG)</li>
@@ -601,11 +601,11 @@ require_once dirname(__DIR__) . '/config/helpers.php';
           <div class="card-title">Upload Frame</div>
 
           <div class="upload-area" id="upload-area">
-            <input type="file" id="frame_image" name="frame_image" accept="image/png,image/jpeg" required>
+            <input type="file" id="frame_image" name="frame_image" accept="image/png" required>
             <div class="upload-icon">🖼️</div>
             <div class="upload-title">Klik atau drag & drop gambar</div>
-            <div class="upload-sub">PNG / JPG</div>
-            <div class="upload-limit">Maks. 1.5 MB • Auto-compress jika di atas 800 KB</div>
+            <div class="upload-sub">PNG transparan</div>
+            <div class="upload-limit">Maks. 1.5 MB • Transparansi diperlukan agar slot foto terdeteksi</div>
           </div>
 
           <!-- Aspect ratio warning -->
@@ -647,7 +647,6 @@ require_once dirname(__DIR__) . '/config/helpers.php';
   'use strict';
 
   /* ── Konstanta ── */
-  const THRESHOLD_COMPRESS = 800 * 1024;      // 800 KB
   const MAX_SIZE           = 1.5 * 1024 * 1024; // 1.5 MB
   const TARGET_SINGLE = { w: 591,  h: 1772 };
   const TARGET_DOUBLE = { w: 1181, h: 1772 };
@@ -672,7 +671,6 @@ require_once dirname(__DIR__) . '/config/helpers.php';
 
   let processedBlob   = null; // file blob setelah compress (atau asli)
   let processedName   = '';
-  let processedType   = '';
 
   /* ── Drag & drop ── */
   uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
@@ -716,9 +714,15 @@ require_once dirname(__DIR__) . '/config/helpers.php';
   }
 
   /* ── Handle file ── */
-  async function handleFile(file) {
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      showCompressStatus('error', '❌ Format tidak didukung. Upload file PNG atau JPG saja.');
+  function handleFile(file) {
+    if (file.type !== 'image/png') {
+      processedBlob = null;
+      showCompressStatus('error', '❌ Upload PNG dengan area slot foto transparan. JPG tidak menyimpan transparansi.');
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      processedBlob = null;
+      showCompressStatus('error', '❌ File melebihi 1.5 MB. Optimalkan PNG tanpa menghilangkan transparansi.');
       return;
     }
 
@@ -731,7 +735,7 @@ require_once dirname(__DIR__) . '/config/helpers.php';
     const imgEl = new Image();
     const objUrl = URL.createObjectURL(file);
 
-    imgEl.onload = async () => {
+    imgEl.onload = () => {
       const origW = imgEl.naturalWidth;
       const origH = imgEl.naturalHeight;
 
@@ -743,75 +747,12 @@ require_once dirname(__DIR__) . '/config/helpers.php';
       // Cek ratio
       checkRatio(origW, origH);
 
-      // Compress jika perlu
-      if (file.size > THRESHOLD_COMPRESS) {
-        await compressFile(file, imgEl, origW, origH);
-      } else {
-        processedBlob = file;
-        processedName = file.name;
-        processedType = file.type;
-        showCompressStatus('success', `✅ Gambar siap (${formatSize(file.size)})`);
-      }
+      processedBlob = file;
+      processedName = file.name;
+      showCompressStatus('success', `✅ PNG siap (${formatSize(file.size)}). Slot transparan akan dideteksi saat admin menyetujui.`);
     };
 
     imgEl.src = objUrl;
-  }
-
-  /* ── Compress via Canvas ── */
-  async function compressFile(file, imgEl, origW, origH) {
-    const target = getTarget();
-    showCompressStatus('compressing', '⏳ Mengompres gambar…');
-
-    const canvas = document.createElement('canvas');
-    const ctx    = canvas.getContext('2d');
-
-    // Resize ke target jika lebih besar
-    let drawW = origW;
-    let drawH = origH;
-    if (origW > target.w || origH > target.h) {
-      const scaleX = target.w / origW;
-      const scaleY = target.h / origH;
-      const scale  = Math.min(scaleX, scaleY);
-      drawW = Math.round(origW * scale);
-      drawH = Math.round(origH * scale);
-    }
-
-    canvas.width  = drawW;
-    canvas.height = drawH;
-    ctx.drawImage(imgEl, 0, 0, drawW, drawH);
-
-    // Iterasi quality
-    let quality = 0.90;
-    let blob    = null;
-
-    while (quality >= 0.50) {
-      blob = await canvasToBlob(canvas, 'image/jpeg', quality);
-      if (blob.size <= MAX_SIZE) break;
-      quality = +(quality - 0.05).toFixed(2);
-      blob = null;
-    }
-
-    if (!blob || blob.size > MAX_SIZE) {
-      showCompressStatus('error', '❌ Gambar terlalu besar/detail bahkan setelah kompresi. Coba kompres manual dulu.');
-      processedBlob = null;
-      return;
-    }
-
-    processedBlob = blob;
-    processedName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
-    processedType = 'image/jpeg';
-
-    const saved = file.size - blob.size;
-    showCompressStatus('success',
-      `✅ Terkompresi dari ${formatSize(file.size)} → ${formatSize(blob.size)} (hemat ${formatSize(saved)})`
-    );
-
-    // Update preview dengan gambar hasil compress
-    previewImg.src = URL.createObjectURL(blob);
-  }
-
-  function canvasToBlob(canvas, type, quality) {
-    return new Promise(resolve => canvas.toBlob(resolve, type, quality));
   }
 
   /* ── Preview guide overlay ── */
@@ -884,7 +825,10 @@ require_once dirname(__DIR__) . '/config/helpers.php';
       // Fallback: pakai file asli jika belum diproses
       processedBlob = fileInput.files[0];
       processedName = fileInput.files[0].name;
-      processedType = fileInput.files[0].type;
+      if (processedBlob.type !== 'image/png') {
+        showCompressStatus('error', '❌ Upload PNG dengan area slot foto transparan.');
+        return;
+      }
     }
 
     if (processedBlob.size > MAX_SIZE) {

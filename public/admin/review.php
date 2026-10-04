@@ -236,7 +236,7 @@ function badge_review(string $s): string {
 
     <!-- Preview -->
     <div class="preview-card">
-      <img src="<?= $imgUrl ?>" alt="Frame preview"
+      <img id="frame-preview" src="<?= $imgUrl ?>" alt="Frame preview" crossorigin="anonymous"
            onerror="this.src='https://placehold.co/280x400/1A2755/6B5FD0?text=No+Image'">
       <div class="preview-meta">
         <strong><?= htmlspecialchars($sub['frame_title'] ?? '-') ?></strong>
@@ -344,13 +344,19 @@ async function doApprove() {
   const btnReject = document.getElementById('btn-reject-open');
   btn.disabled = true;
   if (btnReject) btnReject.disabled = true;
-  btn.textContent = '⏳ Memproses…';
+  btn.textContent = '⏳ Mendeteksi slot…';
 
   try {
+    const slots = await detectTransparentSlots(document.getElementById('frame-preview'));
+    if (!slots.length) {
+      throw new Error('Tidak ada slot transparan yang terdeteksi. Pastikan area foto benar-benar transparan pada file PNG.');
+    }
+
+    btn.textContent = `⏳ Memproses ${slots.length} slot…`;
     const res  = await fetch('/api/admin/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': '' /* dihandle session */ },
-      body: JSON.stringify({ id: SUB_ID })
+      body: JSON.stringify({ id: SUB_ID, slots })
     });
 
     // Coba dengan CSRF dulu, fallback ke X-Admin-Secret
@@ -367,11 +373,115 @@ async function doApprove() {
       btn.textContent = '✅ Approve & Publikasikan';
     }
   } catch (err) {
-    showToast('error', '❌ Koneksi gagal: ' + err.message);
+    showToast('error', '❌ Gagal mendeteksi atau memproses slot: ' + err.message);
     btn.disabled = false;
     if (btnReject) btnReject.disabled = false;
     btn.textContent = '✅ Approve & Publikasikan';
   }
+}
+
+async function detectTransparentSlots(img) {
+  if (!img || !img.naturalWidth || !img.naturalHeight) {
+    throw new Error('Gambar frame belum berhasil dimuat.');
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw new Error('Browser tidak dapat membaca gambar frame.');
+
+  try {
+    context.drawImage(img, 0, 0);
+  } catch (error) {
+    throw new Error('Gambar tidak dapat diproses. Muat ulang halaman review dan coba lagi.');
+  }
+
+  let pixels;
+  try {
+    pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  } catch (error) {
+    throw new Error('Browser tidak diizinkan membaca gambar dari storage. Periksa konfigurasi CORS bucket Supabase.');
+  }
+
+  const width = canvas.width;
+  const height = canvas.height;
+  const pixelCount = width * height;
+  const visited = new Uint8Array(pixelCount);
+  const queue = new Uint32Array(pixelCount);
+  const candidates = [];
+  const minWidth = Math.max(24, width * 0.035);
+  const minHeight = Math.max(50, height * 0.035);
+  const minArea = Math.max(1500, pixelCount * 0.002);
+
+  for (let start = 0; start < pixelCount; start++) {
+    if (visited[start] || pixels[start * 4 + 3] >= 16) continue;
+
+    let head = 0;
+    let tail = 0;
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    visited[start] = 1;
+    queue[tail++] = start;
+
+    while (head < tail) {
+      const index = queue[head++];
+      const x = index % width;
+      const y = Math.floor(index / width);
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+
+      let neighbor;
+      if (x > 0) {
+        neighbor = index - 1;
+        if (!visited[neighbor] && pixels[neighbor * 4 + 3] < 16) {
+          visited[neighbor] = 1;
+          queue[tail++] = neighbor;
+        }
+      }
+      if (x + 1 < width) {
+        neighbor = index + 1;
+        if (!visited[neighbor] && pixels[neighbor * 4 + 3] < 16) {
+          visited[neighbor] = 1;
+          queue[tail++] = neighbor;
+        }
+      }
+      if (y > 0) {
+        neighbor = index - width;
+        if (!visited[neighbor] && pixels[neighbor * 4 + 3] < 16) {
+          visited[neighbor] = 1;
+          queue[tail++] = neighbor;
+        }
+      }
+      if (y + 1 < height) {
+        neighbor = index + width;
+        if (!visited[neighbor] && pixels[neighbor * 4 + 3] < 16) {
+          visited[neighbor] = 1;
+          queue[tail++] = neighbor;
+        }
+      }
+    }
+
+    const boxWidth = maxX - minX + 1;
+    const boxHeight = maxY - minY + 1;
+    if (
+      minX === 0 || minY === 0 || maxX === width - 1 || maxY === height - 1 ||
+      boxWidth < minWidth || boxHeight < minHeight || tail < minArea
+    ) continue;
+
+    candidates.push({
+      x: +(minX / width * 100).toFixed(2),
+      y: +(minY / height * 100).toFixed(2),
+      width: +(boxWidth / width * 100).toFixed(2),
+      height: +(boxHeight / height * 100).toFixed(2)
+    });
+  }
+
+  return candidates.sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
 function openReject() {

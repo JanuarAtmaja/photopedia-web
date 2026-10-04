@@ -48,10 +48,10 @@ if (empty($_FILES['frame_image']) || $_FILES['frame_image']['error'] !== UPLOAD_
 $file     = $_FILES['frame_image'];
 $tmpPath  = $file['tmp_name'];
 $mimeType = mime_content_type($tmpPath);
-$allowed  = ['image/jpeg', 'image/png'];
+$allowed  = ['image/png'];
 
 if (!in_array($mimeType, $allowed, true)) {
-    respond_json(['error' => 'Format file tidak didukung. Hanya JPG dan PNG yang diperbolehkan.'], 422);
+    respond_json(['error' => 'Format file tidak didukung. Upload PNG dengan area slot foto transparan.'], 422);
 }
 
 $maxSize = (int)(1.5 * 1024 * 1024); // 1.5 MB

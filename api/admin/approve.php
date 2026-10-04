@@ -1,7 +1,7 @@
 <?php
 // api/admin/approve.php — Approve sebuah frame submission
 // POST /api/admin/approve
-// Body: { "id": "<submission_uuid>" }
+// Body: { "id": "<submission_uuid>", "slots": [{x, y, width, height}, ...] }
 // Header: X-Admin-Secret: <ADMIN_SECRET>
 //
 // Alur:
@@ -56,6 +56,33 @@ if (!$submissionId) {
     respond_json(['error' => 'Parameter id wajib diisi'], 400);
 }
 
+$slots = $body['slots'] ?? null;
+if (!is_array($slots) || !$slots) {
+    respond_json(['error' => 'Slot transparan belum terdeteksi. Frame tidak dapat dipublikasikan tanpa slot.'], 422);
+}
+if (count($slots) > 20) {
+    respond_json(['error' => 'Terlalu banyak slot terdeteksi. Pastikan hanya area foto yang transparan (maksimum 20).'], 422);
+}
+
+foreach ($slots as $slot) {
+    if (!is_array($slot)) {
+        respond_json(['error' => 'Data slot tidak valid. Silakan ulangi deteksi slot.'], 422);
+    }
+    foreach (['x', 'y', 'width', 'height'] as $key) {
+        if (!isset($slot[$key]) || !is_numeric($slot[$key]) || !is_finite((float) $slot[$key])) {
+            respond_json(['error' => 'Data slot tidak valid. Silakan ulangi deteksi slot.'], 422);
+        }
+    }
+    if (
+        $slot['x'] < 0 || $slot['y'] < 0 ||
+        $slot['width'] <= 0 || $slot['height'] <= 0 ||
+        $slot['x'] + $slot['width'] > 100.01 ||
+        $slot['y'] + $slot['height'] > 100.01
+    ) {
+        respond_json(['error' => 'Koordinat slot berada di luar frame. Silakan ulangi deteksi slot.'], 422);
+    }
+}
+
 // ── Helper: Supabase REST ────────────────────────────────────
 function supa(string $method, string $path, ?array $payload = null, array $extra = []): array
 {
@@ -105,9 +132,8 @@ $filename        = $sub['filename'];       // e.g. frame-abc.png
 $frameTitle      = $sub['frame_title'];
 $submitterEmail  = $sub['submitter_email'];
 $submitterName   = $sub['submitter_name'] ?? 'Kreator';
-$slots           = $sub['slots'] ?? [];
-$width           = (int) ($sub['width']  ?? 1080);
-$height          = (int) ($sub['height'] ?? 1920);
+$width           = (int) ($sub['width_px'] ?? $sub['width'] ?? 1080);
+$height          = (int) ($sub['height_px'] ?? $sub['height'] ?? 1920);
 $stripType       = $sub['strip_type'] ?? '';
 
 // ── 2. Copy file submissions/ → frames/ bucket ───────────────
@@ -156,7 +182,6 @@ if ($upCode < 200 || $upCode >= 300) {
 
 // ── 3. Insert ke tabel frames ────────────────────────────────
 $frameId = preg_replace('/[^a-z0-9\-_]/', '', strtolower(pathinfo($filename, PATHINFO_FILENAME)));
-if (is_string($slots)) $slots = json_decode($slots, true) ?? [];
 
 $insertRes = supa('POST', 'frames', [
     'id'         => $frameId,
@@ -175,6 +200,7 @@ if (!$insertRes['ok']) {
 
 // ── 4. Update status submission → approved ───────────────────
 $updateRes = supa('PATCH', "frame_submissions?id=eq.$submissionId", [
+    'slots'       => $slots,
     'status'      => 'approved',
     'reviewed_at' => date('c'),
 ]);
