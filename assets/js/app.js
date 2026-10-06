@@ -440,6 +440,40 @@ const App = (() => {
     });
   }
 
+  // ── Print setup ────────────────────────────────────────────
+  function initPrintSetup() {
+    const printButton = document.getElementById('print-photo-btn');
+    const previewImg = document.getElementById('export-preview-img');
+    const paperSize = document.getElementById('print-paper-size');
+    const orientation = document.getElementById('print-orientation');
+    const margins = document.getElementById('print-margins');
+
+    printButton?.addEventListener('click', () => {
+      if (!previewImg?.complete || !previewImg.naturalWidth) {
+        showToast('Foto belum siap dicetak. Tunggu hingga preview selesai dimuat.', 'error');
+        return;
+      }
+      if (typeof window.print !== 'function') {
+        showToast('Dialog cetak tidak tersedia di browser ini.', 'error');
+        return;
+      }
+
+      const paperSizes = { a4: 'A4', letter: 'Letter' };
+      const paper = paperSizes[paperSize?.value] ?? paperSizes.a4;
+      const direction = orientation?.value === 'landscape' ? 'landscape' : 'portrait';
+      const pageMargins = margins?.value === '0mm' ? '0mm' : '10mm';
+      let printStyles = document.getElementById('print-page-setup');
+      if (!printStyles) {
+        printStyles = document.createElement('style');
+        printStyles.id = 'print-page-setup';
+        document.head.appendChild(printStyles);
+      }
+      printStyles.textContent = `@page { size: ${paper} ${direction}; margin: ${pageMargins}; }`;
+
+      window.print();
+    });
+  }
+
   // ── Navigation button wiring ───────────────────────────────
   function initNavButtons() {
     document.getElementById('start-btn')?.addEventListener('click', () => navigate('frames'));
@@ -473,6 +507,7 @@ const App = (() => {
     initEditorTabs();
     initFramePicker();
     initEmailForm();
+    initPrintSetup();
     navigate('landing');
   }
 

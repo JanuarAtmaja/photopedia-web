@@ -1049,6 +1049,7 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .action-card:nth-child(1) { background: var(--mint); }
 .action-card:nth-child(2) { background: var(--peach); }
 .action-card:nth-child(3) { background: var(--lime); }
+.action-card:nth-child(4) { background: var(--lavender); }
 
 .action-card h3 {
   font-size: 16px;
@@ -1078,6 +1079,39 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
   box-shadow: 2px 2px 0 var(--magenta);
 }
 
+.print-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 10px 12px;
+  margin-bottom: 16px;
+}
+.print-settings label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.print-settings select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--navy);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--text-main);
+  font: inherit;
+}
+.print-settings select:focus {
+  outline: 2px solid var(--magenta);
+  outline-offset: 2px;
+}
+.print-button { width: 100%; }
+.print-help {
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* QR Code */
 .qr-container {
   display: flex;
@@ -1089,6 +1123,69 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
   border: 2px solid var(--navy);
 }
 #qr-canvas { border-radius: var(--radius-sm); }
+
+@media print {
+  body {
+    min-height: 0;
+    margin: 0;
+    background: white;
+  }
+  body > :not(main),
+  main > :not(#page-export) {
+    display: none !important;
+  }
+  body * { visibility: hidden !important; }
+  #page-export,
+  #page-export .container,
+  #page-export .export-layout,
+  #page-export .export-layout > div:first-child,
+  #page-export .export-preview,
+  #page-export .export-preview img {
+    visibility: visible !important;
+  }
+  #page-export .section-header,
+  #page-export .export-layout > .export-actions,
+  #page-export .export-layout > div:first-child > div:not(.export-preview) {
+    display: none !important;
+  }
+  #page-export {
+    position: fixed;
+    inset: 0;
+    display: block !important;
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    padding: 0;
+  }
+  #page-export .container {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    padding: 0;
+  }
+  #page-export .export-layout,
+  #page-export .export-layout > div:first-child,
+  #page-export .export-preview {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+  #page-export .export-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: white;
+    box-shadow: none;
+  }
+  #page-export .export-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
 
 /* Toast notifications */
 .toast-container {

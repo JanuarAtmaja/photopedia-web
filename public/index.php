@@ -132,7 +132,7 @@ $jsConfig = json_encode([
   <link rel="manifest" href="/site.webmanifest?v=20261004">
 
   <!-- App Styles -->
-  <link rel="stylesheet" href="/assets/css/style.css?v=53">
+  <link rel="stylesheet" href="/assets/css/style.css?v=54">
 
   <!-- Config untuk JS (hanya anon key, AMAN untuk expose ke client) -->
   <script>
@@ -625,7 +625,7 @@ $jsConfig = json_encode([
     <div class="container">
       <div class="section-header">
         <h2 class="section-title">Foto Siap!</h2>
-        <p class="section-sub">Download, bagikan link, atau kirim via email</p>
+        <p class="section-sub">Download, cetak, bagikan link, atau kirim via email</p>
       </div>
 
       <div class="export-layout">
@@ -690,6 +690,35 @@ $jsConfig = json_encode([
               Download JPG
             </a>
           </div>
+
+          <!-- Print -->
+          <div class="action-card print-card">
+            <h3>Print Foto</h3>
+            <div class="print-settings">
+              <label for="print-paper-size">Ukuran kertas</label>
+              <select id="print-paper-size">
+                <option value="a4">A4</option>
+                <option value="letter">Letter</option>
+              </select>
+
+              <label for="print-orientation">Orientasi</label>
+              <select id="print-orientation">
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+
+              <label for="print-margins">Margin</label>
+              <select id="print-margins">
+                <option value="10mm">Normal</option>
+                <option value="0mm">Tanpa margin</option>
+              </select>
+            </div>
+            <button id="print-photo-btn" type="button" class="btn btn-primary print-button"
+                    aria-label="Atur dan cetak foto">
+              Atur &amp; Cetak
+            </button>
+            <p class="print-help">Pengaturan printer lainnya tersedia di dialog cetak Windows.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -734,7 +763,7 @@ $jsConfig = json_encode([
 <!-- App modules -->
 <script src="/assets/js/camera.js?v=52"></script>
 <script src="/assets/js/editor.js?v=52"></script>
-<script src="/assets/js/app.js?v=54"></script>
+<script src="/assets/js/app.js?v=55"></script>
 
 </body>
 </html>
