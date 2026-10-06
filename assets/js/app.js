@@ -458,9 +458,12 @@ const App = (() => {
         return;
       }
 
-      const paperSizes = { a4: 'A4', letter: 'Letter' };
-      const paper = paperSizes[paperSize?.value] ?? paperSizes.a4;
       const direction = orientation?.value === 'landscape' ? 'landscape' : 'portrait';
+      const selectedPaper = paperSize?.value ?? 'a4';
+      const paperSizes = { a4: 'A4', letter: 'Letter' };
+      const paper = selectedPaper === '4x6'
+        ? (direction === 'landscape' ? '6in 4in' : '4in 6in')
+        : `${paperSizes[selectedPaper] ?? paperSizes.a4} ${direction}`;
       const pageMargins = margins?.value === '0mm' ? '0mm' : '10mm';
       let printStyles = document.getElementById('print-page-setup');
       if (!printStyles) {
@@ -468,7 +471,7 @@ const App = (() => {
         printStyles.id = 'print-page-setup';
         document.head.appendChild(printStyles);
       }
-      printStyles.textContent = `@page { size: ${paper} ${direction}; margin: ${pageMargins}; }`;
+      printStyles.textContent = `@page { size: ${paper}; margin: ${pageMargins}; }`;
 
       window.print();
     });

@@ -699,6 +699,7 @@ $jsConfig = json_encode([
               <select id="print-paper-size">
                 <option value="a4">A4</option>
                 <option value="letter">Letter</option>
+                <option value="4x6">4 × 6 inci (10 × 15 cm)</option>
               </select>
 
               <label for="print-orientation">Orientasi</label>
@@ -763,7 +764,7 @@ $jsConfig = json_encode([
 <!-- App modules -->
 <script src="/assets/js/camera.js?v=52"></script>
 <script src="/assets/js/editor.js?v=52"></script>
-<script src="/assets/js/app.js?v=55"></script>
+<script src="/assets/js/app.js?v=56"></script>
 
 </body>
 </html>
