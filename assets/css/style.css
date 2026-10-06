@@ -1274,6 +1274,12 @@ input:checked + .slider:before { transform: translateX(20px); }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: sticky;
+  top: 80px;
+  align-self: start;
+}
+@media (max-width: 768px) {
+  .camera-center { position: static; }
 }
 .video-container {
   flex: 1;
